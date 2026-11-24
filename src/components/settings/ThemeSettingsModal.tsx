@@ -146,42 +146,57 @@ export const ThemeSettingsModal: React.FC<ThemeSettingsModalProps> = ({
                 <button
                   type="button"
                   onClick={() => handleSelectMode('auto')}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center transition cursor-pointer ${
-                    currentThemeMode === 'auto'
-                      ? 'bg-[#0071E3] text-white shadow-xs ring-2 ring-[#0071E3]/25'
-                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]'
-                  }`}
+                  className="relative w-9 h-9 rounded-full flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
                   title="Auto (System mode)"
                 >
-                  <Ban className="w-4 h-4" />
+                  {currentThemeMode === 'auto' && (
+                    <motion.div
+                      layoutId="activeModalThemeModePill"
+                      className="absolute inset-0 rounded-full bg-[#0071E3] shadow-xs"
+                      transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                    />
+                  )}
+                  <span className={`relative z-10 transition-colors ${currentThemeMode === 'auto' ? 'text-white' : ''}`}>
+                    <Ban className="w-4 h-4" />
+                  </span>
                 </button>
 
                 {/* Light Mode */}
                 <button
                   type="button"
                   onClick={() => handleSelectMode('light')}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center transition cursor-pointer ${
-                    currentThemeMode === 'light'
-                      ? 'bg-[#0071E3] text-white shadow-xs ring-2 ring-[#0071E3]/25'
-                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]'
-                  }`}
+                  className="relative w-9 h-9 rounded-full flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
                   title="Light Mode"
                 >
-                  <Sun className="w-4 h-4" />
+                  {currentThemeMode === 'light' && (
+                    <motion.div
+                      layoutId="activeModalThemeModePill"
+                      className="absolute inset-0 rounded-full bg-[#0071E3] shadow-xs"
+                      transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                    />
+                  )}
+                  <span className={`relative z-10 transition-colors ${currentThemeMode === 'light' ? 'text-white' : ''}`}>
+                    <Sun className="w-4 h-4" />
+                  </span>
                 </button>
 
                 {/* Dark Mode */}
                 <button
                   type="button"
                   onClick={() => handleSelectMode('dark')}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center transition cursor-pointer ${
-                    currentThemeMode === 'dark'
-                      ? 'bg-[#0071E3] text-white shadow-xs ring-2 ring-[#0071E3]/25'
-                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]'
-                  }`}
+                  className="relative w-9 h-9 rounded-full flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
                   title="Dark Mode"
                 >
-                  <Moon className="w-4 h-4" />
+                  {currentThemeMode === 'dark' && (
+                    <motion.div
+                      layoutId="activeModalThemeModePill"
+                      className="absolute inset-0 rounded-full bg-[#0071E3] shadow-xs"
+                      transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                    />
+                  )}
+                  <span className={`relative z-10 transition-colors ${currentThemeMode === 'dark' ? 'text-white' : ''}`}>
+                    <Moon className="w-4 h-4" />
+                  </span>
                 </button>
               </div>
             </div>

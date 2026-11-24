@@ -94,19 +94,13 @@ export const InkeadApp: React.FC = () => {
       return;
     }
 
-    // Enable temporary universal transition class for butter-smooth color & surface blending
+    // Enable temporary smooth transition class on structural layout surfaces
     document.documentElement.classList.add('theme-transition');
+    applyTheme();
+
     const timer = setTimeout(() => {
       document.documentElement.classList.remove('theme-transition');
-    }, 350);
-
-    if (typeof document !== 'undefined' && 'startViewTransition' in document) {
-      (document as any).startViewTransition(() => {
-        applyTheme();
-      });
-    } else {
-      applyTheme();
-    }
+    }, 260);
 
     return () => clearTimeout(timer);
   }, [preferences.theme, preferences.themeMode, preferences.libraryTheme, preferences.readerTheme, activeBook]);

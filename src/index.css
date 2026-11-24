@@ -352,7 +352,7 @@
     font-family: var(--font-google);
     font-weight: 400;
     font-variation-settings: 'opsz' 16, 'wght' 400, 'GRAD' 0;
-    transition: background-color 0.28s cubic-bezier(0.16, 1, 0.3, 1), color 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: background-color 0.22s cubic-bezier(0.16, 1, 0.3, 1), color 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     overflow-x: hidden;
     margin: 0;
     padding: 0;
@@ -361,25 +361,25 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* Universal Butter-Smooth Theme & Dark/Light Mode Transitions */
+  /* High-Performance Butter-Smooth Theme & Dark/Light Mode Transitions */
   html.theme-transition,
-  html.theme-transition *,
-  html.theme-transition *::before,
-  html.theme-transition *::after {
-    transition: background-color 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-                border-color 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-                color 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-                fill 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-                stroke 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-                box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
-    transition-delay: 0s !important;
-  }
-
-  /* View Transitions API configuration for seamless GPU cross-fade */
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation-duration: 0.25s;
-    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  html.theme-transition body,
+  html.theme-transition #root,
+  html.theme-transition header,
+  html.theme-transition nav,
+  html.theme-transition aside,
+  html.theme-transition main,
+  html.theme-transition footer,
+  html.theme-transition article,
+  html.theme-transition .reflow-body,
+  html.theme-transition [data-theme],
+  html.theme-transition [data-theme-mode],
+  html.theme-transition .bg-\[var\(--bg-primary\)\],
+  html.theme-transition .bg-\[var\(--bg-surface\)\],
+  html.theme-transition .bg-\[var\(--bg-card\)\] {
+    transition: background-color 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                color 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
 
   /* Optical Grade calibration for Dark / OLED theme:

@@ -1,0 +1,745 @@
+@import "tailwindcss";
+
+@variant dark (&:is([data-theme="oled"], [data-theme="oled"] *, [data-theme-mode="dark"], [data-theme-mode="dark"] *, .dark, .dark *));
+
+@layer base {
+  :root,
+  [data-theme="default"],
+  [data-theme="alabaster"] {
+    --bg-primary: #FFFFFF;
+    --bg-surface: #F5F5F7;
+    --bg-card: #FFFFFF;
+    --text-primary: #1D1D1F;
+    --text-muted: #86868B;
+    --accent: #0071E3;
+    --accent-hover: #0066CC;
+    --accent-secondary: #2997FF;
+    --border-color: #E5E7EB;
+    --border-hover: #D1D5DB;
+    --chip-bg: #F5F5F7;
+    --chip-text: #1D1D1F;
+    --error: #D92D20;
+  }
+
+  [data-theme="gray"],
+  [data-theme="eink"] {
+    --bg-primary: #F3F4F6;
+    --bg-surface: #E5E7EB;
+    --bg-card: #FFFFFF;
+    --text-primary: #111827;
+    --text-muted: #6B7280;
+    --accent: #4B5563;
+    --accent-hover: #374151;
+    --accent-secondary: #6B7280;
+    --border-color: #D1D5DB;
+    --border-hover: #9CA3AF;
+    --chip-bg: #E5E7EB;
+    --chip-text: #111827;
+    --error: #D92D20;
+  }
+
+  [data-theme="sepia"],
+  [data-theme="parchment"] {
+    --bg-primary: #FBF8F1;
+    --bg-surface: #F3ECE1;
+    --bg-card: #FAF5EC;
+    --text-primary: #24211D;
+    --text-muted: #78716A;
+    --accent: #0071E3;
+    --accent-hover: #0066CC;
+    --accent-secondary: #2997FF;
+    --border-color: #E5DFC8;
+    --border-hover: #D8D0B8;
+    --chip-bg: #EFE8DA;
+    --chip-text: #24211D;
+    --error: #D92D20;
+  }
+
+  [data-theme="grass"] {
+    --bg-primary: #F2F7F0;
+    --bg-surface: #E4ECE2;
+    --bg-card: #EBF3EA;
+    --text-primary: #1B331A;
+    --text-muted: #5E7A5D;
+    --accent: #2E7D32;
+    --accent-hover: #1B5E20;
+    --accent-secondary: #4CAF50;
+    --border-color: #CDDCCD;
+    --border-hover: #BACDBA;
+    --chip-bg: #E4ECE2;
+    --chip-text: #1B331A;
+    --error: #D92D20;
+  }
+
+  [data-theme="cherry"] {
+    --bg-primary: #FDF2F4;
+    --bg-surface: #FAE1E6;
+    --bg-card: #FBECF0;
+    --text-primary: #4C1220;
+    --text-muted: #9E5B6D;
+    --accent: #C2185B;
+    --accent-hover: #880E4F;
+    --accent-secondary: #E91E63;
+    --border-color: #F3CCD5;
+    --border-hover: #E8B4C0;
+    --chip-bg: #FAE1E6;
+    --chip-text: #4C1220;
+    --error: #D92D20;
+  }
+
+  [data-theme="sky"] {
+    --bg-primary: #F0F6FF;
+    --bg-surface: #E0ECFD;
+    --bg-card: #E8F1FD;
+    --text-primary: #152A4A;
+    --text-muted: #58759E;
+    --accent: #0071E3;
+    --accent-hover: #005BB5;
+    --accent-secondary: #2997FF;
+    --border-color: #C7DCFA;
+    --border-hover: #AECDF8;
+    --chip-bg: #E0ECFD;
+    --chip-text: #152A4A;
+    --error: #D92D20;
+  }
+
+  [data-theme="solarized"] {
+    --bg-primary: #FDF6E3;
+    --bg-surface: #EEE8D5;
+    --bg-card: #F7F0DC;
+    --text-primary: #073642;
+    --text-muted: #657B83;
+    --accent: #268BD2;
+    --accent-hover: #1E6F9F;
+    --accent-secondary: #2AA198;
+    --border-color: #DFD7C2;
+    --border-hover: #CEC4A9;
+    --chip-bg: #EEE8D5;
+    --chip-text: #073642;
+    --error: #DC322F;
+  }
+
+  [data-theme="gruvbox"] {
+    --bg-primary: #FBF1C7;
+    --bg-surface: #EBDAB4;
+    --bg-card: #F5E8BA;
+    --text-primary: #3C3836;
+    --text-muted: #7C6F64;
+    --accent: #D79921;
+    --accent-hover: #B57614;
+    --accent-secondary: #AF3A03;
+    --border-color: #D5C4A1;
+    --border-hover: #BDAE8D;
+    --chip-bg: #EBDAB4;
+    --chip-text: #3C3836;
+    --error: #CC241D;
+  }
+
+  [data-theme="nord"] {
+    --bg-primary: #ECEFF4;
+    --bg-surface: #E5E9F0;
+    --bg-card: #E8ECF2;
+    --text-primary: #2E3440;
+    --text-muted: #4C566A;
+    --accent: #5E81AC;
+    --accent-hover: #4C6A8D;
+    --accent-secondary: #88C0D0;
+    --border-color: #D8DEE9;
+    --border-hover: #C2C9D6;
+    --chip-bg: #E5E9F0;
+    --chip-text: #2E3440;
+    --error: #BF616A;
+  }
+
+  /* OLED / Pure Midnight & Dark Modes */
+  [data-theme="oled"],
+  [data-theme-mode="dark"][data-theme="default"],
+  [data-theme-mode="dark"][data-theme="alabaster"],
+  [data-theme-mode="dark"] [data-theme="default"],
+  [data-theme-mode="dark"] [data-theme="alabaster"],
+  .dark [data-theme="default"],
+  .dark [data-theme="alabaster"],
+  .dark {
+    --bg-primary: #000000;
+    --bg-surface: #141416;
+    --bg-card: #18191B;
+    --text-primary: #F5F5F7;
+    --text-muted: #86868B;
+    --accent: #2997FF;
+    --accent-hover: #0071E3;
+    --accent-secondary: #0066CC;
+    --border-color: rgba(255, 255, 255, 0.10);
+    --border-hover: rgba(255, 255, 255, 0.20);
+    --chip-bg: #242426;
+    --chip-text: #F5F5F7;
+    --error: #FF453A;
+  }
+
+  [data-theme-mode="dark"][data-theme="gray"],
+  [data-theme-mode="dark"][data-theme="eink"],
+  [data-theme-mode="dark"] [data-theme="gray"],
+  [data-theme-mode="dark"] [data-theme="eink"],
+  .dark [data-theme="gray"],
+  .dark [data-theme="eink"] {
+    --bg-primary: #18181B;
+    --bg-surface: #27272A;
+    --bg-card: #202024;
+    --text-primary: #F4F4F5;
+    --text-muted: #A1A1AA;
+    --accent: #A1A1AA;
+    --accent-hover: #D4D4D8;
+    --accent-secondary: #71717A;
+    --border-color: #3F3F46;
+    --border-hover: #52525B;
+    --chip-bg: #27272A;
+    --chip-text: #F4F4F5;
+    --error: #EF4444;
+  }
+
+  [data-theme-mode="dark"][data-theme="sepia"],
+  [data-theme-mode="dark"][data-theme="parchment"],
+  [data-theme-mode="dark"] [data-theme="sepia"],
+  [data-theme-mode="dark"] [data-theme="parchment"],
+  .dark [data-theme="sepia"],
+  .dark [data-theme="parchment"] {
+    --bg-primary: #1C1814;
+    --bg-surface: #26211B;
+    --bg-card: #221D17;
+    --text-primary: #EFE3D3;
+    --text-muted: #A89B8C;
+    --accent: #D97706;
+    --accent-hover: #F59E0B;
+    --accent-secondary: #B45309;
+    --border-color: #383027;
+    --border-hover: #4D4236;
+    --chip-bg: #26211B;
+    --chip-text: #EFE3D3;
+    --error: #EF4444;
+  }
+
+  [data-theme-mode="dark"][data-theme="grass"],
+  [data-theme-mode="dark"] [data-theme="grass"],
+  .dark [data-theme="grass"] {
+    --bg-primary: #121A13;
+    --bg-surface: #1A261B;
+    --bg-card: #162017;
+    --text-primary: #D6EAD8;
+    --text-muted: #8AA88C;
+    --accent: #4CAF50;
+    --accent-hover: #66BB6A;
+    --accent-secondary: #388E3C;
+    --border-color: #263828;
+    --border-hover: #364F39;
+    --chip-bg: #1A261B;
+    --chip-text: #D6EAD8;
+    --error: #EF4444;
+  }
+
+  [data-theme-mode="dark"][data-theme="cherry"],
+  [data-theme-mode="dark"] [data-theme="cherry"],
+  .dark [data-theme="cherry"] {
+    --bg-primary: #1A1014;
+    --bg-surface: #26161E;
+    --bg-card: #201319;
+    --text-primary: #F7D6DE;
+    --text-muted: #B88594;
+    --accent: #E91E63;
+    --accent-hover: #F06292;
+    --accent-secondary: #C2185B;
+    --border-color: #3A202D;
+    --border-hover: #502B3E;
+    --chip-bg: #26161E;
+    --chip-text: #F7D6DE;
+    --error: #EF4444;
+  }
+
+  [data-theme-mode="dark"][data-theme="sky"],
+  [data-theme-mode="dark"] [data-theme="sky"],
+  .dark [data-theme="sky"] {
+    --bg-primary: #0F172A;
+    --bg-surface: #1E293B;
+    --bg-card: #152136;
+    --text-primary: #E0EDFD;
+    --text-muted: #8EA4C4;
+    --accent: #38BDF8;
+    --accent-hover: #0EA5E9;
+    --accent-secondary: #0284C7;
+    --border-color: #283B56;
+    --border-hover: #375073;
+    --chip-bg: #1E293B;
+    --chip-text: #E0EDFD;
+    --error: #EF4444;
+  }
+
+  [data-theme-mode="dark"][data-theme="solarized"],
+  [data-theme-mode="dark"] [data-theme="solarized"],
+  .dark [data-theme="solarized"] {
+    --bg-primary: #002B36;
+    --bg-surface: #073642;
+    --bg-card: #04242D;
+    --text-primary: #93A1A1;
+    --text-muted: #657B83;
+    --accent: #2AA198;
+    --accent-hover: #268BD2;
+    --accent-secondary: #859900;
+    --border-color: #0E4856;
+    --border-hover: #165E70;
+    --chip-bg: #073642;
+    --chip-text: #93A1A1;
+    --error: #DC322F;
+  }
+
+  [data-theme-mode="dark"][data-theme="gruvbox"],
+  [data-theme-mode="dark"] [data-theme="gruvbox"],
+  .dark [data-theme="gruvbox"] {
+    --bg-primary: #282828;
+    --bg-surface: #3C3836;
+    --bg-card: #32302F;
+    --text-primary: #EBDBB2;
+    --text-muted: #A89984;
+    --accent: #FABD2F;
+    --accent-hover: #FE8019;
+    --accent-secondary: #D79921;
+    --border-color: #504945;
+    --border-hover: #665C54;
+    --chip-bg: #3C3836;
+    --chip-text: #EBDBB2;
+    --error: #FB4934;
+  }
+
+  [data-theme-mode="dark"][data-theme="nord"],
+  [data-theme-mode="dark"] [data-theme="nord"],
+  .dark [data-theme="nord"] {
+    --bg-primary: #2E3440;
+    --bg-surface: #3B4252;
+    --bg-card: #353C4A;
+    --text-primary: #ECEFF4;
+    --text-muted: #98A2B3;
+    --accent: #88C0D0;
+    --accent-hover: #81A1C1;
+    --accent-secondary: #5E81AC;
+    --border-color: #434C5E;
+    --border-hover: #4C566A;
+    --chip-bg: #3B4252;
+    --chip-text: #ECEFF4;
+    --error: #BF616A;
+  }
+}
+
+@layer base {
+  :root {
+    --font-google: 'Google Sans Flex', 'Google Sans', 'Google Sans Text', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-literata: 'Literata', Charter, Georgia, serif;
+    --font-newsreader: 'Newsreader', 'Times New Roman', Garamond, serif;
+    --font-mono: 'JetBrains Mono', 'Space Grotesk', ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  * {
+    box-sizing: border-box;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  *::-webkit-scrollbar {
+    display: none;
+    width: 0px;
+    height: 0px;
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-google);
+    font-weight: 400;
+    font-variation-settings: 'opsz' 16, 'wght' 400, 'GRAD' 0;
+    transition: background-color 0.28s cubic-bezier(0.16, 1, 0.3, 1), color 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Universal Butter-Smooth Theme & Dark/Light Mode Transitions */
+  html.theme-transition,
+  html.theme-transition *,
+  html.theme-transition *::before,
+  html.theme-transition *::after {
+    transition: background-color 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                color 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                fill 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                stroke 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    transition-delay: 0s !important;
+  }
+
+  /* View Transitions API configuration for seamless GPU cross-fade */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.25s;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Optical Grade calibration for Dark / OLED theme:
+     Subtly thins stroke weight (-20 GRAD) to completely eliminate optical light bloom / glow
+     against pure black, keeping glyphs razor-sharp and legible. */
+  [data-theme="oled"],
+  .dark {
+    font-variation-settings: 'opsz' 16, 'wght' 400, 'GRAD' -20;
+  }
+
+  /* Headings with calibrated Weight & Grade Hierarchy */
+  h1, .h1 {
+    font-family: var(--font-google);
+    font-weight: 700;
+    font-variation-settings: 'opsz' 36, 'wght' 700, 'GRAD' 30;
+    letter-spacing: -0.025em;
+  }
+
+  h2, .h2 {
+    font-family: var(--font-google);
+    font-weight: 600;
+    font-variation-settings: 'opsz' 28, 'wght' 600, 'GRAD' 20;
+    letter-spacing: -0.02em;
+  }
+
+  h3, .h3 {
+    font-family: var(--font-google);
+    font-weight: 600;
+    font-variation-settings: 'opsz' 20, 'wght' 600, 'GRAD' 15;
+    letter-spacing: -0.015em;
+  }
+
+  h4, h5, h6 {
+    font-family: var(--font-google);
+    font-weight: 500;
+    font-variation-settings: 'opsz' 16, 'wght' 500, 'GRAD' 10;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* Tabular Number Font - Google Sans Flex with Tabular Lining Figures & Optical Grade */
+.font-num {
+  font-family: 'Google Sans Flex', 'Google Sans', monospace;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-variation-settings: 'opsz' 14, 'wght' 500, 'GRAD' 10;
+  letter-spacing: -0.015em;
+}
+
+/* Primary Button with Google Sans Medium & Optical Grade Hover Shift */
+.btn-primary {
+  background-color: var(--accent);
+  color: #FFFFFF;
+  border-radius: 9999px;
+  padding: 11px 21px;
+  height: 44px;
+  font-family: var(--font-google);
+  font-size: 15px;
+  font-weight: 500;
+  font-variation-settings: 'opsz' 15, 'wght' 500, 'GRAD' 10;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-hover);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:active {
+  background-color: var(--accent-hover);
+  opacity: 0.92;
+}
+
+/* Secondary Button with Google Sans & Subtle Grade */
+.btn-secondary {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 9999px;
+  padding: 9px 18px;
+  height: 40px;
+  font-family: var(--font-google);
+  font-size: 14px;
+  font-weight: 500;
+  font-variation-settings: 'opsz' 14, 'wght' 500, 'GRAD' 5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-secondary:hover {
+  border-color: var(--border-hover);
+  background-color: var(--bg-card);
+  font-variation-settings: 'opsz' 14, 'wght' 500, 'GRAD' 30;
+}
+
+/* Chip / Badge with Google Sans */
+.apple-chip {
+  background-color: var(--chip-bg);
+  color: var(--chip-text);
+  border-radius: 9999px;
+  padding: 4px 10px;
+  font-family: var(--font-google);
+  font-size: 12px;
+  font-weight: 500;
+  font-variation-settings: 'opsz' 12, 'wght' 500, 'GRAD' 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Google Sans Weight & Grade Design Utility Scale */
+.g-sans-hero {
+  font-family: var(--font-google);
+  font-variation-settings: 'opsz' 48, 'wght' 700, 'GRAD' 40;
+  letter-spacing: -0.03em;
+}
+
+.g-sans-title {
+  font-family: var(--font-google);
+  font-variation-settings: 'opsz' 24, 'wght' 600, 'GRAD' 25;
+  letter-spacing: -0.02em;
+}
+
+.g-sans-subhead {
+  font-family: var(--font-google);
+  font-variation-settings: 'opsz' 18, 'wght' 500, 'GRAD' 15;
+  letter-spacing: -0.01em;
+}
+
+.g-sans-body {
+  font-family: var(--font-google);
+  font-variation-settings: 'opsz' 16, 'wght' 400, 'GRAD' 0;
+}
+
+.g-sans-body-medium {
+  font-family: var(--font-google);
+  font-variation-settings: 'opsz' 16, 'wght' 500, 'GRAD' 15;
+}
+
+.g-sans-caption {
+  font-family: var(--font-google);
+  font-variation-settings: 'opsz' 12, 'wght' 400, 'GRAD' -10;
+  letter-spacing: 0.01em;
+}
+
+.g-sans-meta {
+  font-family: var(--font-google);
+  font-variation-settings: 'opsz' 11, 'wght' 500, 'GRAD' 10;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Typography Font Family Utilities */
+.font-google-sans {
+  font-family: var(--font-google);
+}
+.font-literata {
+  font-family: var(--font-literata);
+}
+.font-newsreader {
+  font-family: var(--font-newsreader);
+}
+.font-mono-code {
+  font-family: var(--font-mono);
+}
+
+/* Reflowable Book Typography Inheritance */
+.reflow-body,
+.reflow-body p,
+.reflow-body span,
+.reflow-body div,
+.reflow-body li,
+.reflow-body blockquote,
+.reflow-body article,
+.reflow-body section {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+  text-align: inherit !important;
+}
+
+.reflow-body h1,
+.reflow-body h2,
+.reflow-body h3,
+.reflow-body h4,
+.reflow-body h5,
+.reflow-body h6 {
+  font-family: inherit !important;
+  text-align: inherit !important;
+}
+
+/* Minimalist Luxury Scrubber Slider */
+.reader-scrubber {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 9999px;
+  outline: none;
+  cursor: pointer;
+  transition: height 0.15s ease;
+}
+
+.reader-scrubber:hover {
+  height: 6px;
+}
+
+.reader-scrubber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  border: 2px solid var(--bg-card);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease;
+}
+
+.reader-scrubber:hover::-webkit-slider-thumb {
+  transform: scale(1.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.reader-scrubber::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  border: 2px solid var(--bg-card);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease;
+}
+
+.reader-scrubber:hover::-moz-range-thumb {
+  transform: scale(1.15);
+}
+
+/* Global Invisible Scrollbar Utility */
+.no-scrollbar {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Optimized High-Performance Grid Item */
+.page-grid-item {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 155px;
+}
+
+/* Reflowable Book & Wikipedia Editorial Media Styling */
+.reflow-body figure,
+.reflow-body .thumb {
+  margin: 1.75rem auto;
+  padding: 0.875rem;
+  border-radius: 1.25rem;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 38rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.reflow-body figure img,
+.reflow-body .thumb img {
+  border-radius: 0.875rem;
+  max-height: 520px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.reflow-body figcaption,
+.reflow-body .thumbcaption {
+  font-size: 0.8125rem !important;
+  line-height: 1.45 !important;
+  color: var(--text-muted) !important;
+  font-style: italic;
+  text-align: center !important;
+  margin-top: 0.625rem;
+  padding: 0 0.5rem;
+  max-width: 34rem;
+}
+
+.reflow-body .infobox,
+.reflow-body .infobox-card {
+  float: none;
+  margin: 1.5rem auto;
+  padding: 1.25rem;
+  border-radius: 1.25rem;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  font-size: 0.8125rem !important;
+  line-height: 1.4 !important;
+  width: 100%;
+  max-width: 22rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+@media (min-width: 640px) {
+  .reflow-body .infobox,
+  .reflow-body .infobox-card {
+    float: right;
+    margin: 0.25rem 0 1.5rem 1.75rem;
+  }
+}
+
+.reflow-body table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 1.5rem 0;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.reflow-body table th,
+.reflow-body table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.85rem !important;
+}
+
+.reflow-body table th {
+  background-color: var(--bg-surface);
+  font-weight: 600;
+  text-align: left !important;
+}
+
+.reflow-body sup.reference {
+  font-size: 0.6875rem !important;
+  line-height: 0;
+  vertical-align: super;
+  padding-left: 0.125rem;
+  color: var(--accent) !important;
+  user-select: none;
+  opacity: 0.85;
+}
+
+.reflow-body sup.reference a {
+  text-decoration: none !important;
+}
+

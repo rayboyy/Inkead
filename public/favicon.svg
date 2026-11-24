@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0077ED" />
+      <stop offset="50%" stop-color="#0062C4" />
+      <stop offset="100%" stop-color="#004EA3" />
+    </linearGradient>
+    <linearGradient id="leftPage" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F2EDE2" />
+      <stop offset="85%" stop-color="#FAF7F0" />
+      <stop offset="100%" stop-color="#E5DEC9" />
+    </linearGradient>
+    <linearGradient id="rightPage" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#DDD5BF" />
+      <stop offset="15%" stop-color="#FAF7F0" />
+      <stop offset="100%" stop-color="#F2EDE2" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="512" height="512" rx="114" ry="114" fill="url(#bgGrad)" />
+  <g>
+    <path d="M 120 150 C 180 142, 236 160, 256 182 C 276 160, 332 142, 392 150 L 392 376 C 332 368, 276 386, 256 408 C 236 386, 180 368, 120 376 Z" fill="#00356E" />
+    <path d="M 124 154 C 180 146, 234 164, 254 186 L 254 398 C 234 376, 180 358, 124 366 Z" fill="url(#leftPage)" />
+    <path d="M 152 216 Q 192 210 230 220" stroke="#B8AFA0" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.6" />
+    <path d="M 152 248 Q 192 242 230 252" stroke="#B8AFA0" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.6" />
+    <path d="M 152 280 Q 192 274 230 284" stroke="#B8AFA0" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.6" />
+    <path d="M 258 186 C 278 164, 332 146, 388 154 L 388 366 C 332 358, 278 376, 258 398 Z" fill="url(#rightPage)" />
+    <path d="M 282 220 Q 320 210 360 216" stroke="#B8AFA0" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.6" />
+    <path d="M 282 252 Q 320 242 360 248" stroke="#B8AFA0" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.6" />
+    <path d="M 282 284 Q 320 274 360 280" stroke="#B8AFA0" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.6" />
+    <path d="M 254 186 Q 256 182 258 186 L 258 398 Q 256 394 254 398 Z" fill="#C2B8A0" opacity="0.8" />
+    <path d="M 250 160 L 262 160 L 262 310 L 256 298 L 250 310 Z" fill="#E8A725" />
+    <path d="M 250 160 L 256 160 L 256 298 L 250 310 Z" fill="#FFC83B" />
+    <path d="M 374 108 L 380 124 L 396 130 L 380 136 L 374 152 L 368 136 L 352 130 L 368 124 Z" fill="#FFFFFF" opacity="0.85" />
+  </g>
+</svg>

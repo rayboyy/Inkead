@@ -42,7 +42,7 @@ async function fetchJsonSafe(url: string): Promise<any> {
   // 2. Try direct fetch
   try {
     const res = await fetch(url, {
-      headers: { 'User-Agent': 'FolioReader/1.0 (https://folioreader.app)' },
+      headers: { 'User-Agent': 'InkeadReader/1.0 (https://inkead.app)' },
     });
     if (res.ok) return await res.json();
   } catch {

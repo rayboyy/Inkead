@@ -72,11 +72,11 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
             <div className="flex flex-col items-center text-center pt-1">
               <img
                 src="/icon.svg"
-                alt="Folio App Icon"
+                alt="Inkead App Icon"
                 className="w-16 h-16 rounded-2xl shadow-lg border border-black/5 dark:border-white/10 mb-3.5 object-cover"
               />
               <h3 className="text-[19px] font-semibold tracking-tight text-[var(--text-primary)] g-sans-title">
-                Install Folio
+                Install Inkead
               </h3>
               <p className="text-[12.5px] text-[var(--text-muted)] g-sans-body mt-1 max-w-[300px] leading-relaxed">
                 A dedicated, distraction-free reading window for your books and documents.
@@ -88,7 +88,7 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
               <div className="py-3 px-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-center space-y-1">
                 <div className="flex items-center justify-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium text-[13px] g-sans-body-medium">
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Folio is Installed</span>
+                  <span>Inkead is Installed</span>
                 </div>
                 <p className="text-[11.5px] text-[var(--text-muted)] g-sans-caption">
                   Launch anytime from your desktop, dock, or taskbar.
@@ -184,7 +184,7 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
                         2
                       </span>
                       <span>
-                        Or click <strong className="font-semibold text-[var(--text-primary)]">Menu (⋮)</strong> → <strong className="font-semibold text-[var(--text-primary)]">"Save and share"</strong> → <strong className="font-semibold text-[var(--text-primary)]">"Install Folio"</strong>.
+                        Or click <strong className="font-semibold text-[var(--text-primary)]">Menu (⋮)</strong> → <strong className="font-semibold text-[var(--text-primary)]">"Save and share"</strong> → <strong className="font-semibold text-[var(--text-primary)]">"Install Inkead"</strong>.
                       </span>
                     </div>
                   </div>

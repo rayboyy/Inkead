@@ -1,32 +1,31 @@
-# React + TypeScript + Vite
+# Inkead
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+> A distraction-free personal offline reading sanctuary and luxury e-reader for desktop and mobile.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Universal Format Support**: EPUB, PDF, CBZ/CBR (Graphic Novels & Manga), MOBI, AZW3, FB2, RTF, HTML, TXT, and Markdown.
+- **Editorial Wikipedia Reader**: Turn any Wikipedia article into a book with high-resolution illustrations, clean typography, chapter sections, and zero boilerplate.
+- **PWA & Standalone App**: 100% offline-first progressive web app. Installable on Windows, macOS, iOS, and Android.
+- **Calm Typography & Theming**: Custom optical grade typography (Google Sans, Editorial Serif, Classic Book, Monospace) with 9 curated color palettes, OLED dark mode, and butter-smooth theme transitions.
+- **Annotations & Marks**: Select text to highlight, take margin notes, or place visual pin marks anywhere on pages and chapters.
+- **Integrated Lexicon**: Instant dictionary definitions with multi-tier lookup (Free Dictionary, Wiktionary, Wikipedia summaries, and audio pronunciations).
+- **Ambient Soundscapes**: Built-in sound player with Rain, Forest, Cafe, White Noise, Ocean, and Fireplace audio loops.
+- **Private & Local**: All books, files, annotations, and reading progress are stored entirely on your local device.
 
-## React Compiler
+## Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+# Install dependencies
+npm install
 
-## Expanding the Oxlint configuration
+# Start development server
+npm run dev
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+# Build for production
+npm run build
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## License
+
+MIT

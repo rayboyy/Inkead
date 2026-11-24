@@ -544,7 +544,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
             <UploadCloud className="w-8 h-8 animate-bounce" />
           </div>
           <h2 className="text-2xl font-semibold text-white tracking-tight">
-            Drop to Add to FOLIO
+            Drop to Add to Inkead
           </h2>
           <p className="text-sm text-stone-300 mt-1.5 font-normal">
             Supports PDF, EPUB, MOBI, AZW3, FB2, CBZ, RTF, HTML, and Markdown
@@ -562,7 +562,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
             </div>
             <div>
               <span className="font-semibold text-lg tracking-[-0.02em] text-[var(--text-primary)]">
-                FOLIO
+                Inkead
               </span>
             </div>
           </div>
@@ -581,7 +581,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
               title={
                 pwaState.isInstalled
                   ? 'Running in Standalone Window Mode'
-                  : 'Install Folio App for Desktop & Mobile'
+                  : 'Install Inkead App for Desktop & Mobile'
               }
             >
               {pwaState.isInstalled ? (

@@ -15,7 +15,7 @@ import { LibraryView } from './components/library/LibraryView';
 import { ReaderView } from './components/reader/ReaderView';
 import { LoadingScreen } from './components/ui/LoadingState';
 
-export const FolioApp: React.FC = () => {
+export const InkeadApp: React.FC = () => {
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [books, setBooks] = useState<Book[]>([]);
   const [sessions, setSessions] = useState<ReadingSession[]>([]);
@@ -153,7 +153,7 @@ export const FolioApp: React.FC = () => {
         data-theme={preferences.theme}
         className="min-h-screen w-full flex flex-col items-center justify-center bg-[var(--bg-primary)] text-[var(--text-primary)]"
       >
-        <LoadingScreen fullScreen title="Entering Folio" subtitle="Restoring your personal reading sanctuary" />
+        <LoadingScreen fullScreen title="Entering Inkead" subtitle="Restoring your personal reading sanctuary" />
       </div>
     );
   }
@@ -185,7 +185,7 @@ export const FolioApp: React.FC = () => {
 export default function App() {
   return (
     <ToastProvider>
-      <FolioApp />
+      <InkeadApp />
     </ToastProvider>
   );
 }

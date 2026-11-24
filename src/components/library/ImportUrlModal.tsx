@@ -249,7 +249,7 @@ export const ImportUrlModal: React.FC<ImportUrlModalProps> = ({
         );
       }
 
-      setStatusMessage('Formatting for Folio Reader...');
+      setStatusMessage('Formatting for Inkead Reader...');
       const cleaned = cleanArticleContent(rawText, targetUrl);
 
       const finalTitle = customTitle.trim() || cleaned.title;

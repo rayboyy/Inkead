@@ -70,7 +70,7 @@ export const ThemeSettingsModal: React.FC<ThemeSettingsModalProps> = ({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.16, ease: 'easeOut' }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/25 dark:bg-black/60 backdrop-blur-xs"
+            className="fixed inset-0 bg-black/30 dark:bg-black/65"
           />
 
           {/* Modal Container - Solid, Zero-Scale, Zero-Jitter Pure Fade */}
@@ -218,22 +218,34 @@ export const ThemeSettingsModal: React.FC<ThemeSettingsModalProps> = ({
                     <button
                       key={palette.id}
                       type="button"
-                      onClick={() => handleSelectPalette(palette.id)}
+                      onClick={() => {
+                        React.startTransition(() => {
+                          handleSelectPalette(palette.id);
+                        });
+                      }}
                       style={{
                         backgroundColor: bg,
                         color: textColor,
-                        borderColor: isSelected ? (isDarkMode ? '#2997FF' : '#0071E3') : border,
+                        borderColor: border,
                       }}
-                      className={`h-20 rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs relative ${
-                        isSelected
-                          ? 'border-2 ring-2 ring-[#0071E3]/30 dark:ring-[#2997FF]/50 scale-[1.02]'
-                          : 'hover:brightness-98 dark:hover:brightness-110'
-                      }`}
+                      className="h-20 rounded-2xl border flex flex-col items-center justify-center gap-1 transition-colors duration-150 cursor-pointer shadow-2xs relative hover:brightness-98 dark:hover:brightness-110"
                     >
                       {isSelected && (
-                        <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#0071E3] dark:bg-[#2997FF] text-white dark:text-black flex items-center justify-center shadow-xs">
+                        <motion.div
+                          layoutId="activeModalThemeColorRing"
+                          transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                          className="absolute -inset-[1px] rounded-2xl border-2 border-[#0071E3] dark:border-[#2997FF] pointer-events-none"
+                        />
+                      )}
+                      {isSelected && (
+                        <motion.div
+                          initial={{ scale: 0.6, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ duration: 0.14, ease: 'easeOut' }}
+                          className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#0071E3] dark:bg-[#2997FF] text-white dark:text-black flex items-center justify-center shadow-xs pointer-events-none"
+                        >
                           <Check className="w-2.5 h-2.5 stroke-[3]" />
-                        </div>
+                        </motion.div>
                       )}
                       <span className="text-[17px] font-bold tracking-tight">
                         Aa

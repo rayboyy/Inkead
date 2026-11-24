@@ -91,7 +91,7 @@ export const AppearancePopover: React.FC<AppearancePopoverProps> = ({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.16, ease: 'easeOut' }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/15 dark:bg-black/40 backdrop-blur-[2px] pointer-events-auto"
+            className="fixed inset-0 bg-black/20 dark:bg-black/45 pointer-events-auto"
           />
 
           {/* Fixed Layout Anchor */}
@@ -237,22 +237,20 @@ export const AppearancePopover: React.FC<AppearancePopoverProps> = ({
                   <button
                     key={palette.id}
                     type="button"
-                    onClick={() =>
-                      onChange({
-                        readerTheme: palette.id as ReadingTheme,
-                        theme: palette.id as ReadingTheme,
-                      })
-                    }
+                    onClick={() => {
+                      React.startTransition(() => {
+                        onChange({
+                          readerTheme: palette.id as ReadingTheme,
+                          theme: palette.id as ReadingTheme,
+                        });
+                      });
+                    }}
                     style={{
                       backgroundColor: bg,
                       color: textColor,
-                      borderColor: isSelected ? (isDark ? '#FFFFFF' : '#1D1D1F') : border,
+                      borderColor: border,
                     }}
-                    className={`h-16 rounded-xl border flex flex-col items-center justify-center gap-0.5 transition-colors cursor-pointer shadow-2xs relative ${
-                      isSelected
-                        ? 'border-2 ring-2 ring-[#0071E3]'
-                        : 'hover:brightness-98 dark:hover:brightness-110'
-                    }`}
+                    className="h-16 rounded-xl border flex flex-col items-center justify-center gap-0.5 transition-colors duration-150 cursor-pointer shadow-2xs relative hover:brightness-98 dark:hover:brightness-110"
                   >
                     <span className="text-[15px] font-bold tracking-tight">
                       Aa
@@ -261,11 +259,25 @@ export const AppearancePopover: React.FC<AppearancePopoverProps> = ({
                       {palette.name}
                     </span>
 
+                    {/* Smooth Sliding Active Border Ring */}
+                    {isSelected && (
+                      <motion.div
+                        layoutId="activeReaderThemeColorRing"
+                        transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                        className="absolute -inset-[1px] rounded-xl border-2 border-[#0071E3] dark:border-[#2997FF] pointer-events-none"
+                      />
+                    )}
+
                     {/* Selected Checkmark Badge */}
                     {isSelected && (
-                      <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[#0071E3] text-white flex items-center justify-center shadow-xs">
+                      <motion.div
+                        initial={{ scale: 0.6, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.14, ease: 'easeOut' }}
+                        className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-[#0071E3] dark:bg-[#2997FF] text-white flex items-center justify-center shadow-xs pointer-events-none"
+                      >
                         <Check className="w-2.5 h-2.5 stroke-[3]" />
-                      </div>
+                      </motion.div>
                     )}
                   </button>
                 );

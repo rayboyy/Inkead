@@ -14,6 +14,7 @@ import { ToastProvider } from './components/ui/Toast';
 import { LibraryView } from './components/library/LibraryView';
 import { ReaderView } from './components/reader/ReaderView';
 import { LoadingScreen } from './components/ui/LoadingState';
+import { SpotifyLofiPopover } from './components/audio/SpotifyLofiPopover';
 
 export const InkeadApp: React.FC = () => {
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
@@ -21,6 +22,8 @@ export const InkeadApp: React.FC = () => {
   const [sessions, setSessions] = useState<ReadingSession[]>([]);
   const [activeBook, setActiveBook] = useState<Book | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [isSpotifyOpen, setIsSpotifyOpen] = useState(false);
+  const [isSpotifyActive, setIsSpotifyActive] = useState(false);
 
   // Initialize DB and Seed Sample Book if Empty
   const loadInitialData = useCallback(async () => {
@@ -152,6 +155,13 @@ export const InkeadApp: React.FC = () => {
     );
   }
 
+  const handleToggleSpotify = () => {
+    setIsSpotifyOpen((prev) => !prev);
+    if (!isSpotifyActive) {
+      setIsSpotifyActive(true);
+    }
+  };
+
   return (
     <div className="w-full min-h-screen">
       {activeBook ? (
@@ -161,6 +171,8 @@ export const InkeadApp: React.FC = () => {
           onUpdatePreferences={handleUpdatePreferences}
           onBackToLibrary={handleBackToLibrary}
           onUpdateBook={handleUpdateBook}
+          onOpenSpotify={handleToggleSpotify}
+          isSpotifyActive={isSpotifyActive}
         />
       ) : (
         <LibraryView
@@ -170,8 +182,19 @@ export const InkeadApp: React.FC = () => {
           onUpdatePreferences={handleUpdatePreferences}
           onOpenBook={handleOpenBook}
           onRefreshBooks={handleRefreshBooks}
+          onOpenSpotify={handleToggleSpotify}
+          isSpotifyActive={isSpotifyActive}
         />
       )}
+
+      {/* Persistent Spotify Lofi Radio (stays mounted so music plays in background) */}
+      <SpotifyLofiPopover
+        isOpen={isSpotifyOpen}
+        isActive={isSpotifyActive}
+        onActivate={() => setIsSpotifyActive(true)}
+        onDeactivate={() => setIsSpotifyActive(false)}
+        onClose={() => setIsSpotifyOpen(false)}
+      />
     </div>
   );
 };

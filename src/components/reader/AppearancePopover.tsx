@@ -91,7 +91,7 @@ export const AppearancePopover: React.FC<AppearancePopoverProps> = ({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.16, ease: 'easeOut' }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/20 dark:bg-black/45 pointer-events-auto"
+            className="fixed inset-0 bg-black/20 dark:bg-black/50 backdrop-blur-xs pointer-events-auto"
           />
 
           {/* Fixed Layout Anchor */}

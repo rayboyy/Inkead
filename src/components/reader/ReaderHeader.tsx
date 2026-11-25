@@ -13,6 +13,7 @@ import {
   MapPin,
 } from 'lucide-react';
 import { TimerHudPill } from '../timer/TimerHudPill';
+import { SpotifyIcon } from '../audio/SpotifyLofiPopover';
 
 interface ReaderHeaderProps {
   book: Book;
@@ -36,6 +37,8 @@ interface ReaderHeaderProps {
   highlightsCount: number;
   isMarkMode?: boolean;
   onToggleMarkMode?: () => void;
+  onOpenSpotify?: () => void;
+  isSpotifyActive?: boolean;
 }
 
 export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
@@ -60,6 +63,8 @@ export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
   highlightsCount,
   isMarkMode = false,
   onToggleMarkMode,
+  onOpenSpotify,
+  isSpotifyActive = false,
 }) => {
   return (
     <motion.header
@@ -155,6 +160,26 @@ export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
                 <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#0071E3] dark:bg-[#2997FF] animate-pulse" />
               )}
           </button>
+
+          {/* Spotify Lofi Reading Radio */}
+          {onOpenSpotify && (
+            <button
+              type="button"
+              onClick={onOpenSpotify}
+              className={`p-2 rounded-full transition cursor-pointer relative ${
+                isSpotifyActive
+                  ? 'text-[#0071E3] dark:text-[#2997FF] bg-[#0071E3]/10 dark:bg-[#2997FF]/15'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]'
+              }`}
+              title="Spotify Lofi Reading Playlists"
+              aria-label="Spotify Lofi"
+            >
+              <SpotifyIcon className="w-4 h-4 text-[#1DB954]" />
+              {isSpotifyActive && (
+                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#1DB954] animate-pulse" />
+              )}
+            </button>
+          )}
 
           {/* Mark & Annotate Tool */}
           <button

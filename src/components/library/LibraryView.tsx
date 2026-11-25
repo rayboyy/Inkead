@@ -33,6 +33,7 @@ import { InstallAppModal } from '../pwa/InstallAppModal';
 import { BOOK_COVER_PALETTES, getBookCoverPalette } from './BookCoverPlaceholder';
 import { ImportMenuPopover } from './ImportMenuPopover';
 import { PasteTextModal } from './PasteTextModal';
+import { SpotifyIcon } from '../audio/SpotifyLofiPopover';
 import { ImportUrlModal } from './ImportUrlModal';
 import { WikipediaParsedBook } from '../../lib/parsers/wikipediaParser';
 import { ThemeSettingsModal } from '../settings/ThemeSettingsModal';
@@ -65,6 +66,8 @@ interface LibraryViewProps {
   onUpdatePreferences: (updated: Partial<UserPreferences>) => void;
   onOpenBook: (book: Book) => void;
   onRefreshBooks: () => Promise<void>;
+  onOpenSpotify?: () => void;
+  isSpotifyActive?: boolean;
 }
 
 export const LibraryView: React.FC<LibraryViewProps> = ({
@@ -74,6 +77,8 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
   onUpdatePreferences,
   onOpenBook,
   onRefreshBooks,
+  onOpenSpotify,
+  isSpotifyActive = false,
 }) => {
   const { success, error: toastError, info, warning } = useToast();
 
@@ -323,7 +328,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
 
       await saveBook(newBook);
       await onRefreshBooks();
-      success('Wikipedia Article Imported', `"${newBook.title}" with high-res media is ready to read.`);
+      success('Article Imported', `"${newBook.title}" with preserved layout & media is ready to read.`);
       onOpenBook(newBook);
     } catch (err: unknown) {
       console.error('Failed to save Wikipedia article:', err);
@@ -596,6 +601,22 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                 </>
               )}
             </button>
+
+            {/* Spotify Lofi Reading Radio Pill */}
+            {onOpenSpotify && (
+              <button
+                type="button"
+                onClick={onOpenSpotify}
+                className="relative px-3.5 py-1.5 rounded-full border border-[var(--border-color)] bg-[var(--bg-surface)] hover:bg-[var(--bg-card)] text-[var(--text-primary)] transition flex items-center gap-1.5 text-[13px] font-medium cursor-pointer shadow-2xs"
+                title="Spotify Lofi Reading Playlists"
+              >
+                <SpotifyIcon className="w-3.5 h-3.5 text-[#1DB954]" />
+                <span className="hidden md:inline">Lofi</span>
+                {isSpotifyActive && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#1DB954] animate-pulse" />
+                )}
+              </button>
+            )}
 
             {/* Insights Pill Button */}
             <button

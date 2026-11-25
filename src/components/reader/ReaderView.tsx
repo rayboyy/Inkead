@@ -40,6 +40,8 @@ interface ReaderViewProps {
   onUpdatePreferences: (updated: Partial<UserPreferences>) => void;
   onBackToLibrary: () => void;
   onUpdateBook: (updated: Book) => void;
+  onOpenSpotify?: () => void;
+  isSpotifyActive?: boolean;
 }
 
 export const ReaderView: React.FC<ReaderViewProps> = ({
@@ -48,6 +50,8 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
   onUpdatePreferences,
   onBackToLibrary,
   onUpdateBook,
+  onOpenSpotify,
+  isSpotifyActive = false,
 }) => {
   const { success, error: toastError, info } = useToast();
 
@@ -574,6 +578,8 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
         highlightsCount={highlights.length}
         isMarkMode={isMarkMode}
         onToggleMarkMode={handleToggleMarkMode}
+        onOpenSpotify={onOpenSpotify}
+        isSpotifyActive={isSpotifyActive}
       />
 
       {/* Mark Mode Active Banner */}

@@ -12,6 +12,7 @@ import {
 import { BlinkingDots } from '../ui/LoadingState';
 import { detectFileType } from '../../lib/parsers/sniffer';
 import { isWikipediaUrl, fetchWikipediaArticle, WikipediaParsedBook } from '../../lib/parsers/wikipediaParser';
+import { fetchRichWebArticle } from '../../lib/parsers/webArticleParser';
 
 export interface ImportUrlModalProps {
   isOpen: boolean;
@@ -44,8 +45,12 @@ export const ImportUrlModal: React.FC<ImportUrlModalProps> = ({
       url: 'https://en.wikipedia.org/wiki/Typography',
     },
     {
-      label: 'Self-Reliance (Emerson)',
-      url: 'https://en.wikipedia.org/wiki/Self-Reliance',
+      label: 'Attention Paper (arXiv)',
+      url: 'https://arxiv.org/abs/1706.03762',
+    },
+    {
+      label: 'React README (GitHub)',
+      url: 'https://github.com/facebook/react',
     },
   ];
 
@@ -59,34 +64,6 @@ export const ImportUrlModal: React.FC<ImportUrlModalProps> = ({
     } catch (err) {
       console.warn('Could not read clipboard:', err);
     }
-  };
-
-  const cleanArticleContent = (rawText: string, originalUrl: string) => {
-    let title = '';
-    let author = '';
-    let markdown = rawText;
-
-    const titleMatch = rawText.match(/^Title:\s*(.+)$/m);
-    if (titleMatch && titleMatch[1]) {
-      title = titleMatch[1].trim();
-    }
-
-    const domainMatch = originalUrl.match(/^https?:\/\/(?:www\.)?([^/?#]+)/i);
-    author = domainMatch ? domainMatch[1] : 'Web Article';
-
-    const contentMarker = rawText.indexOf('Markdown Content:');
-    if (contentMarker !== -1) {
-      markdown = rawText.substring(contentMarker + 'Markdown Content:'.length).trim();
-    }
-
-    // Clean up excessive empty lines
-    markdown = markdown.replace(/\n{3,}/g, '\n\n');
-
-    return {
-      title: title || 'Web Article',
-      author,
-      content: markdown,
-    };
   };
 
   const handleFetchAndImport = async (e: React.FormEvent) => {
@@ -147,41 +124,61 @@ export const ImportUrlModal: React.FC<ImportUrlModalProps> = ({
       let proxyBuffer: ArrayBuffer | null = null;
       let contentType = '';
 
-      try {
-        const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
-        const res = await fetch(proxyUrl);
-        if (res.ok) {
-          contentType = res.headers.get('content-type') || '';
-          proxyBuffer = await res.arrayBuffer();
+      const isHtmlPayload = (buf: ArrayBuffer, ct: string) => {
+        if (/text\/html/i.test(ct)) return true;
+        const head = Array.from(new Uint8Array(buf.slice(0, 256)))
+          .map((b) => String.fromCharCode(b))
+          .join('')
+          .trimStart()
+          .toLowerCase();
+        return head.startsWith('<!doctype html') || head.startsWith('<html');
+      };
+
+      const tryFetchBuffer = async (fetchUrl: string, timeoutMs: number): Promise<{ buf: ArrayBuffer; ct: string } | null> => {
+        try {
+          const res = await fetch(fetchUrl, { signal: AbortSignal.timeout(timeoutMs) });
+          if (!res.ok) return null;
+          const ct = res.headers.get('content-type') || '';
+          const buf = await res.arrayBuffer();
+          if (buf.byteLength === 0) return null;
+          if (isLikelyDocument && isHtmlPayload(buf, ct)) {
+            return null;
+          }
+          return { buf, ct };
+        } catch {
+          return null;
         }
-      } catch (proxyErr) {
-        console.warn('Local proxy fetch failed, falling back:', proxyErr);
+      };
+
+      const localAttempt = await tryFetchBuffer(`/api/proxy?url=${encodeURIComponent(targetUrl)}`, 60000);
+      if (localAttempt) {
+        proxyBuffer = localAttempt.buf;
+        contentType = localAttempt.ct;
       }
 
-      // If this is a direct document URL (e.g., NCERT PDF) and proxy failed, try direct fetch & binary CORS proxy
+      // If this is a direct document URL (e.g., NCERT PDF) and local proxy failed or returned HTML,
+      // try direct CORS-enabled fetch & public binary CORS proxies with timeouts
       if ((!proxyBuffer || proxyBuffer.byteLength === 0) && isLikelyDocument) {
         setStatusMessage('Trying direct document download...');
-        try {
-          const directRes = await fetch(targetUrl);
-          if (directRes.ok) {
-            contentType = directRes.headers.get('content-type') || '';
-            proxyBuffer = await directRes.arrayBuffer();
-          }
-        } catch {
-          // Ignore direct CORS error
+        const directAttempt = await tryFetchBuffer(targetUrl, 25000);
+        if (directAttempt) {
+          proxyBuffer = directAttempt.buf;
+          contentType = directAttempt.ct;
         }
+      }
 
-        if (!proxyBuffer || proxyBuffer.byteLength === 0) {
-          setStatusMessage('Trying binary proxy fallback...');
-          try {
-            const binCorsUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
-            const corsRes = await fetch(binCorsUrl);
-            if (corsRes.ok) {
-              contentType = corsRes.headers.get('content-type') || '';
-              proxyBuffer = await corsRes.arrayBuffer();
-            }
-          } catch {
-            // Ignore
+      if ((!proxyBuffer || proxyBuffer.byteLength === 0) && isLikelyDocument) {
+        setStatusMessage('Trying binary proxy fallback...');
+        const fallbackProxies = [
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+          `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
+        ];
+        for (const fbUrl of fallbackProxies) {
+          const fbAttempt = await tryFetchBuffer(fbUrl, 15000);
+          if (fbAttempt) {
+            proxyBuffer = fbAttempt.buf;
+            contentType = fbAttempt.ct;
+            break;
           }
         }
       }
@@ -251,66 +248,45 @@ export const ImportUrlModal: React.FC<ImportUrlModalProps> = ({
         );
       }
 
-      // 3. Fallback or standard Web Article flow: Jina Reader API / AllOrigins
-      setStatusMessage('Extracting readable article content...');
-      let rawText = '';
-      let fetchSuccess = false;
+      // 3. Rich Website Integrations & Media-Preserving Article Extraction
+      // (arXiv HTML5/PDF, GitHub, Dev.to, Reddit, ScienceDirect/DOI Open-Access, and general HTML with images/layout)
+      setStatusMessage('Extracting rich layout, images & text...');
+      const richResult = await fetchRichWebArticle(targetUrl, customTitle);
 
-      // Attempt Jina Reader API
-      try {
-        const jinaUrl = `https://r.jina.ai/${encodeURIComponent(targetUrl)}`;
-        const res = await fetch(jinaUrl, {
-          headers: { Accept: 'text/plain' },
+      if (richResult.kind === 'binary-url') {
+        setStatusMessage('Downloading document PDF...');
+        const pdfAttempt =
+          (await tryFetchBuffer(`/api/proxy?url=${encodeURIComponent(richResult.url)}`, 60000)) ||
+          (await tryFetchBuffer(richResult.url, 30000));
+        if (!pdfAttempt) {
+          throw new Error('Could not download the linked PDF document.');
+        }
+        const fileName =
+          (customTitle.trim()
+            ? `${customTitle.trim().replace(/[/\\?%*:|"<>]/g, '-')}.pdf`
+            : richResult.suggestedName) || 'document.pdf';
+        const file = new File([pdfAttempt.buf], fileName, {
+          type: pdfAttempt.ct || 'application/pdf',
         });
-        if (res.ok) {
-          rawText = await res.text();
-          if (rawText && rawText.length > 80 && !rawText.includes('Markdown Content:\n\n')) {
-            fetchSuccess = true;
-          }
+        if (onSaveBinaryBook) {
+          await onSaveBinaryBook(file);
         }
-      } catch (jinaErr) {
-        console.warn('Jina fetch error, trying proxy fallback:', jinaErr);
+        onClose();
+        setUrl('');
+        setCustomTitle('');
+        return;
       }
 
-      // Attempt Proxy Text
-      if (!fetchSuccess && proxyBuffer) {
-        const decoded = new TextDecoder('utf-8').decode(proxyBuffer);
-        if (decoded && decoded.trim().length > 80) {
-          rawText = decoded;
-          fetchSuccess = true;
-        }
-      }
-
-      // Fallback: AllOrigins CORS proxy
-      if (!fetchSuccess) {
-        setStatusMessage('Attempting clean proxy fetch...');
-        try {
-          const fallbackUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
-          const fallbackRes = await fetch(fallbackUrl);
-          if (fallbackRes.ok) {
-            rawText = await fallbackRes.text();
-            if (rawText && rawText.length > 80) {
-              fetchSuccess = true;
-            }
-          }
-        } catch (fallbackErr) {
-          console.warn('AllOrigins proxy fetch error:', fallbackErr);
-        }
-      }
-
-      if (!fetchSuccess || !rawText.trim()) {
-        throw new Error(
-          'Could not fetch article or document. The source might be private, behind a paywall, or blocking automated readers.'
+      setStatusMessage(`Formatting ${richResult.sourceLabel} for Inkead Reader...`);
+      if (onSaveWikipediaBook) {
+        await onSaveWikipediaBook(richResult.book);
+      } else {
+        await onSaveWebArticle(
+          richResult.book.title,
+          richResult.book.author,
+          richResult.book.chapters.map((c) => `# ${c.title}\n\n${c.content}`).join('\n\n')
         );
       }
-
-      setStatusMessage('Formatting for Inkead Reader...');
-      const cleaned = cleanArticleContent(rawText, targetUrl);
-
-      const finalTitle = customTitle.trim() || cleaned.title;
-      const finalAuthor = cleaned.author;
-
-      await onSaveWebArticle(finalTitle, finalAuthor, cleaned.content);
       onClose();
       setUrl('');
       setCustomTitle('');

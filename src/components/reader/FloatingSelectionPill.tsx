@@ -27,8 +27,8 @@ export const FloatingSelectionPill: React.FC<FloatingSelectionPillProps> = ({
   if (!rect || !selectedText) return null;
 
   // Calculate position: above selection, centered
-  const pillWidth = isAddingNote ? 280 : 260;
-  const pillHeight = isAddingNote ? 120 : 42;
+  const pillWidth = isAddingNote ? 296 : 260;
+  const pillHeight = isAddingNote ? 160 : 42;
 
   let left = rect.left + rect.width / 2 - pillWidth / 2;
   // Viewport clamp
@@ -75,7 +75,9 @@ export const FloatingSelectionPill: React.FC<FloatingSelectionPillProps> = ({
           zIndex: 60,
         }}
         onClick={(e) => e.stopPropagation()}
-        className="rounded-full bg-[var(--bg-card)]/95 backdrop-blur-2xl border border-[var(--border-color)] shadow-2xl text-[var(--text-primary)] p-1.5 flex flex-col gap-2 select-none"
+        className={`${
+          isAddingNote ? 'rounded-2xl p-2' : 'rounded-full p-1.5'
+        } bg-[var(--bg-card)]/95 backdrop-blur-2xl border border-[var(--border-color)] shadow-2xl text-[var(--text-primary)] flex flex-col gap-2 select-none`}
       >
         {!isAddingNote ? (
           <div className="flex items-center gap-1.5 px-1">
@@ -133,10 +135,10 @@ export const FloatingSelectionPill: React.FC<FloatingSelectionPillProps> = ({
             </button>
           </div>
         ) : (
-          <div className="p-2 w-68 space-y-2">
-            <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
-              <span className="font-medium text-[11px] text-[var(--text-primary)]">Add Margin Note</span>
-              <div className="flex items-center gap-1">
+          <div className="p-1.5 w-72 space-y-2.5">
+            <div className="flex items-center justify-between text-xs text-[var(--text-muted)] px-0.5">
+              <span className="font-semibold text-xs text-[var(--text-primary)]">Add Margin Note</span>
+              <div className="flex items-center gap-1.5">
                 {colors.map((c) => (
                   <button
                     key={c.key}

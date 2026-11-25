@@ -129,7 +129,7 @@ function corsProxyPlugin(): Plugin {
       }
 
       // Standard fallback fetch for smaller files or articles
-      const fallbackRes = await fetch(targetUrl, { headers });
+      const fallbackRes = initialRes.status === 200 ? initialRes : await fetch(targetUrl, { headers });
       res.statusCode = fallbackRes.status;
       res.setHeader('Content-Type', fallbackRes.headers.get('content-type') || contentType);
       const fallbackBuf = await fallbackRes.arrayBuffer();

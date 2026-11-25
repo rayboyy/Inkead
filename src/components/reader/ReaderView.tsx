@@ -602,7 +602,10 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
             viewMode={preferences.pdfViewMode}
             zoom={preferences.pdfZoom}
             highlights={highlights}
+            isDark={isDark}
+            activeTheme={activeTheme}
             onPageChange={handlePageChange}
+            onToggleChrome={() => setChromeVisible(!chromeVisible)}
             onTextSelected={handleTextSelected}
             onHighlightClick={handleHighlightClick}
             isMarkMode={isMarkMode}

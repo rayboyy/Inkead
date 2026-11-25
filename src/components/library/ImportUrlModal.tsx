@@ -158,6 +158,34 @@ export const ImportUrlModal: React.FC<ImportUrlModalProps> = ({
         console.warn('Local proxy fetch failed, falling back:', proxyErr);
       }
 
+      // If this is a direct document URL (e.g., NCERT PDF) and proxy failed, try direct fetch & binary CORS proxy
+      if ((!proxyBuffer || proxyBuffer.byteLength === 0) && isLikelyDocument) {
+        setStatusMessage('Trying direct document download...');
+        try {
+          const directRes = await fetch(targetUrl);
+          if (directRes.ok) {
+            contentType = directRes.headers.get('content-type') || '';
+            proxyBuffer = await directRes.arrayBuffer();
+          }
+        } catch {
+          // Ignore direct CORS error
+        }
+
+        if (!proxyBuffer || proxyBuffer.byteLength === 0) {
+          setStatusMessage('Trying binary proxy fallback...');
+          try {
+            const binCorsUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+            const corsRes = await fetch(binCorsUrl);
+            if (corsRes.ok) {
+              contentType = corsRes.headers.get('content-type') || '';
+              proxyBuffer = await corsRes.arrayBuffer();
+            }
+          } catch {
+            // Ignore
+          }
+        }
+      }
+
       // Check if the downloaded payload is an ebook or binary document (PDF, EPUB, CBZ, MOBI, FB2, RTF)
       if (proxyBuffer && proxyBuffer.byteLength > 0) {
         let rawFileName = 'document';
@@ -169,17 +197,37 @@ export const ImportUrlModal: React.FC<ImportUrlModalProps> = ({
         }
 
         const detected = detectFileType(proxyBuffer, rawFileName);
+        const isBinaryMime = /application\/(pdf|epub\+zip|x-mobipocket-ebook|x-cbz|x-cbr)/i.test(contentType);
 
-        if (detected && ['pdf', 'epub', 'cbz', 'mobi', 'azw3', 'fb2', 'rtf'].includes(detected)) {
-          setStatusMessage(`Processing ${detected.toUpperCase()} book...`);
+        if (
+          (detected && ['pdf', 'epub', 'cbz', 'mobi', 'azw3', 'fb2', 'rtf'].includes(detected)) ||
+          isBinaryMime
+        ) {
+          const finalExt =
+            detected && ['pdf', 'epub', 'cbz', 'mobi', 'azw3', 'fb2', 'rtf'].includes(detected)
+              ? detected
+              : 'pdf';
+
+          // Guard against HTML error pages masquerading as .pdf URLs
+          if (finalExt === 'pdf') {
+            const headBytes = new Uint8Array(proxyBuffer.slice(0, 1024));
+            const headStr = Array.from(headBytes).map((b) => String.fromCharCode(b)).join('');
+            if (!headStr.includes('%PDF-')) {
+              throw new Error(
+                'The URL did not return a valid PDF file (the server may have returned an error page or blocked access).'
+              );
+            }
+          }
+
+          setStatusMessage(`Importing ${finalExt.toUpperCase()} document...`);
 
           let finalFileName = rawFileName;
-          if (!finalFileName.toLowerCase().endsWith(`.${detected}`)) {
-            finalFileName = `${finalFileName}.${detected}`;
+          if (!finalFileName.toLowerCase().endsWith(`.${finalExt}`)) {
+            finalFileName = `${finalFileName}.${finalExt}`;
           }
 
           if (customTitle.trim()) {
-            finalFileName = `${customTitle.trim().replace(/[/\\?%*:|"<>]/g, '-')}.${detected}`;
+            finalFileName = `${customTitle.trim().replace(/[/\\?%*:|"<>]/g, '-')}.${finalExt}`;
           }
 
           const file = new File([proxyBuffer], finalFileName, {
@@ -194,6 +242,13 @@ export const ImportUrlModal: React.FC<ImportUrlModalProps> = ({
           setCustomTitle('');
           return;
         }
+      }
+
+      // Never fall back to Jina Reader text extraction for PDF/binary document URLs
+      if (isLikelyDocument) {
+        throw new Error(
+          'Could not download this PDF/document directly. The host server may be unreachable or blocking downloads.'
+        );
       }
 
       // 3. Fallback or standard Web Article flow: Jina Reader API / AllOrigins

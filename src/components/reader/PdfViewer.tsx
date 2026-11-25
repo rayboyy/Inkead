@@ -5,6 +5,7 @@ import { Book, Highlight, PdfViewMode, HighlightColor } from '../../types';
 import { getBookFile } from '../../lib/db';
 import { LoadingScreen } from '../ui/LoadingState';
 import { MarkPin } from './MarkPin';
+import { Sun, Moon } from 'lucide-react';
 
 // Guarantee PDF.js always executes off the main thread via dedicated Web Worker
 if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
@@ -17,7 +18,10 @@ interface PdfViewerProps {
   viewMode: PdfViewMode;
   zoom: number; // 0.5 to 2.0
   highlights: Highlight[];
+  isDark?: boolean;
+  activeTheme?: string;
   onPageChange: (newPage: number) => void;
+  onToggleChrome?: () => void;
   onTextSelected: (text: string, rect: DOMRect) => void;
   onHighlightClick: (highlight: Highlight, rect: DOMRect) => void;
   isMarkMode?: boolean;
@@ -26,13 +30,84 @@ interface PdfViewerProps {
   focusedMarkId?: string | null;
 }
 
+/**
+ * Normalize whitespace for resilient substring matching across PDF text layer spans.
+ */
+function normalizeText(str: string): string {
+  return str.replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+/**
+ * Applies inline highlight classes directly onto matched PDF.js TextLayer spans.
+ * Returns IDs of highlights that could not be matched to text spans (e.g. image-only pages).
+ */
+function applyPdfInlineHighlights(
+  textLayerEl: HTMLDivElement,
+  textHighlights: Highlight[]
+): Set<string> {
+  const unmatchedIds = new Set<string>(textHighlights.map((h) => h.id));
+  const spans = Array.from(textLayerEl.querySelectorAll('span')) as HTMLSpanElement[];
+
+  // Clear previous highlight classes
+  for (const span of spans) {
+    span.classList.remove('pdf-hl-amber', 'pdf-hl-sage', 'pdf-hl-sky', 'pdf-hl-rose');
+    delete span.dataset.highlightId;
+  }
+
+  if (spans.length === 0 || textHighlights.length === 0) {
+    return unmatchedIds;
+  }
+
+  // Build flat normalized string with span index ranges
+  const spanRanges: { span: HTMLSpanElement; start: number; end: number }[] = [];
+  let combined = '';
+
+  for (const span of spans) {
+    const raw = span.textContent || '';
+    const norm = raw.replace(/\s+/g, ' ').toLowerCase();
+    if (!norm) continue;
+
+    // Insert a virtual space separator between spans if neither side has whitespace
+    if (combined.length > 0 && !combined.endsWith(' ') && !norm.startsWith(' ')) {
+      combined += ' ';
+    }
+    const start = combined.length;
+    combined += norm;
+    const end = combined.length;
+    spanRanges.push({ span, start, end });
+  }
+
+  for (const h of textHighlights) {
+    const target = normalizeText(h.text);
+    if (!target) continue;
+
+    const matchIdx = combined.indexOf(target);
+    if (matchIdx === -1) continue;
+
+    const matchEnd = matchIdx + target.length;
+    unmatchedIds.delete(h.id);
+
+    for (const range of spanRanges) {
+      if (range.end > matchIdx && range.start < matchEnd) {
+        range.span.classList.add(`pdf-hl-${h.color}`);
+        range.span.dataset.highlightId = h.id;
+      }
+    }
+  }
+
+  return unmatchedIds;
+}
+
 export const PdfViewer: React.FC<PdfViewerProps> = ({
   book,
   currentPage,
   viewMode,
   zoom,
   highlights,
+  isDark = false,
+  activeTheme = 'default',
   onPageChange,
+  onToggleChrome,
   onTextSelected,
   onHighlightClick,
   isMarkMode = false,
@@ -44,9 +119,11 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [invertDarkPdf, setInvertDarkPdf] = useState(true);
 
   // Active rendering tasks to cancel if user jumps quickly
   const renderTasksRef = useRef<Map<number, pdfjsLib.RenderTask>>(new Map());
+  const textLayersRef = useRef<Map<number, pdfjsLib.TextLayer>>(new Map());
 
   // Load PDF Document
   useEffect(() => {
@@ -93,6 +170,13 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     };
   }, [book.id, book.fileData]);
 
+  // Reset scroll cleanly when flipping pages in single/spread mode
+  useEffect(() => {
+    if (viewMode !== 'scroll') {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, [currentPage, viewMode]);
+
   // Text selection listener on container
   const handleMouseUp = useCallback(() => {
     const selection = window.getSelection();
@@ -108,25 +192,60 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     }
   }, [onTextSelected]);
 
-  // Render a specific page onto canvas + text layer
+  // Edge-click / center-tap navigation (matches Reflowable & CBZ readers)
+  const handleContainerClick = (e: React.MouseEvent) => {
+    if (isMarkMode) return;
+    const selection = window.getSelection();
+    if (selection && !selection.isCollapsed) return;
+
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('button') ||
+      target.closest('a') ||
+      target.closest('[data-highlight-id]')
+    ) {
+      return;
+    }
+
+    const width = window.innerWidth;
+    const clickX = e.clientX;
+    const step = viewMode === 'spread' ? 2 : 1;
+
+    if (clickX < width * 0.14) {
+      if (currentPage > 1) onPageChange(Math.max(1, currentPage - step));
+    } else if (clickX > width * 0.86) {
+      if (currentPage < (book.pageCount || 1)) {
+        onPageChange(Math.min(book.pageCount || 1, currentPage + step));
+      }
+    } else if (!target.closest('.textLayer span')) {
+      onToggleChrome?.();
+    }
+  };
+
+  // Render a specific page onto canvas + official PDF.js TextLayer
   const renderPage = useCallback(
     async (
       pageNum: number,
       canvasEl: HTMLCanvasElement,
       textLayerEl: HTMLDivElement
-    ) => {
-      if (!pdfDoc) return;
+    ): Promise<boolean> => {
+      if (!pdfDoc) return false;
 
-      // Cancel previous task for this page if still rendering
+      // Cancel previous render & textLayer tasks for this page if still running
       const existingTask = renderTasksRef.current.get(pageNum);
       if (existingTask) {
         existingTask.cancel();
         renderTasksRef.current.delete(pageNum);
       }
+      const existingTextLayer = textLayersRef.current.get(pageNum);
+      if (existingTextLayer) {
+        existingTextLayer.cancel();
+        textLayersRef.current.delete(pageNum);
+      }
 
       try {
         const page = await pdfDoc.getPage(pageNum);
-        const containerWidth = containerRef.current?.clientWidth || 800;
+        const containerWidth = containerRef.current?.clientWidth || 860;
 
         // Base scale calculation
         const unscaledViewport = page.getViewport({ scale: 1 });
@@ -150,11 +269,11 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         canvasEl.height = Math.floor(viewport.height * dpr);
 
         const ctx = canvasEl.getContext('2d');
-        if (!ctx) return;
+        if (!ctx) return false;
 
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        // White paper background
+        // Crisp white paper base (theme blending applies cleanly via CSS)
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, viewport.width, viewport.height);
 
@@ -170,39 +289,33 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         await renderTask.promise;
         renderTasksRef.current.delete(pageNum);
 
-        // Render Text Layer for natural selection and highlighting
+        // Official PDF.js TextLayer for exact, native-feeling text selection & highlighting
         textLayerEl.innerHTML = '';
         textLayerEl.style.width = `${viewport.width}px`;
         textLayerEl.style.height = `${viewport.height}px`;
+        textLayerEl.style.setProperty('--total-scale-factor', String(viewport.scale));
 
-        const textContent = await page.getTextContent();
-        
-        // Manual simple high-performance text layer mapping
-        // We create invisible, perfectly aligned spans matching viewport
-        textContent.items.forEach((item) => {
-          if ('str' in item && item.str.length > 0) {
-            const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
-            const span = document.createElement('span');
-            span.textContent = item.str;
-            span.style.position = 'absolute';
-            span.style.left = `${tx[4]}px`;
-            span.style.top = `${tx[5] - item.height * actualScale}px`;
-            span.style.fontSize = `${item.height * actualScale}px`;
-            span.style.fontFamily = 'sans-serif';
-            span.style.color = 'transparent';
-            span.style.transformOrigin = 'left top';
-            span.style.whiteSpace = 'pre';
-            span.style.pointerEvents = 'auto';
-            span.className = 'pdf-text-char select-text';
-            textLayerEl.appendChild(span);
-          }
+        const textLayer = new pdfjsLib.TextLayer({
+          textContentSource: page.streamTextContent(),
+          container: textLayerEl,
+          viewport,
         });
+        textLayersRef.current.set(pageNum, textLayer);
+
+        await textLayer.render();
+        textLayersRef.current.delete(pageNum);
+        return true;
       } catch (err: unknown) {
-        if (err && typeof err === 'object' && 'name' in err && err.name === 'RenderingCancelledException') {
-          // Normal task cancellation when turning pages quickly
-          return;
+        if (
+          err &&
+          typeof err === 'object' &&
+          'name' in err &&
+          (err.name === 'RenderingCancelledException' || err.name === 'AbortException')
+        ) {
+          return false;
         }
         console.warn(`Render error page ${pageNum}:`, err);
+        return false;
       }
     },
     [pdfDoc, viewMode, zoom]
@@ -226,7 +339,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     }
   }
 
-  // Color classes for highlights
+  // Color classes for fallback highlight pills
   const highlightStyles: Record<HighlightColor, string> = {
     amber: 'bg-amber-300/40 border-b-2 border-amber-500',
     sage: 'bg-emerald-300/40 border-b-2 border-emerald-500',
@@ -234,12 +347,39 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     rose: 'bg-rose-300/40 border-b-2 border-rose-500',
   };
 
+  // Determine theme paper integration style for PDF canvas
+  const isTintedLightTheme =
+    !isDark && activeTheme !== 'default' && activeTheme !== 'alabaster';
+
   return (
     <div
       ref={containerRef}
       onMouseUp={handleMouseUp}
-      className="w-full min-h-full flex flex-col items-center justify-center p-4 sm:p-8 select-text"
+      onClick={handleContainerClick}
+      className="w-full min-h-full flex flex-col items-center justify-start px-4 sm:px-8 py-20 sm:py-24 select-text relative"
     >
+      {/* Subtle Dark Paper Toggle when reading PDFs in Dark Mode */}
+      {isDark && !loading && !error && (
+        <button
+          type="button"
+          onClick={() => setInvertDarkPdf((prev) => !prev)}
+          className="fixed bottom-20 right-4 sm:right-6 z-30 px-3 py-1.5 rounded-full bg-[var(--bg-card)]/90 backdrop-blur-xl border border-[var(--border-color)] shadow-md text-[11px] font-medium text-[var(--text-primary)] hover:border-[#0071E3]/50 transition flex items-center gap-1.5 cursor-pointer select-none"
+          title={invertDarkPdf ? 'Switch to Original White Paper' : 'Switch to Dark Paper'}
+        >
+          {invertDarkPdf ? (
+            <>
+              <Sun className="w-3.5 h-3.5 text-amber-400" />
+              <span>Original Paper</span>
+            </>
+          ) : (
+            <>
+              <Moon className="w-3.5 h-3.5 text-[#2997FF]" />
+              <span>Dark Paper</span>
+            </>
+          )}
+        </button>
+      )}
+
       {loading && (
         <LoadingScreen
           title="Rendering Pages"
@@ -257,10 +397,10 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         <AnimatePresence mode="wait">
           <motion.div
             key={viewMode}
-            initial={{ opacity: 0, scale: 0.985 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.985 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.14, ease: 'easeOut' }}
             className={`flex ${
               viewMode === 'spread' ? 'flex-row items-start' : 'flex-col items-center'
             } gap-6 justify-center`}
@@ -277,6 +417,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
                 onPlaceMarkPosition={onPlaceMarkPosition}
                 onMarkClick={onMarkClick}
                 focusedMarkId={focusedMarkId}
+                isDark={isDark}
+                invertDarkPdf={invertDarkPdf}
+                isTintedLightTheme={isTintedLightTheme}
               />
             ))}
           </motion.div>
@@ -292,7 +435,7 @@ interface SinglePdfPageProps {
     pageNum: number,
     canvas: HTMLCanvasElement,
     textLayer: HTMLDivElement
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   highlights: Highlight[];
   highlightStyles: Record<HighlightColor, string>;
   onHighlightClick: (h: Highlight, rect: DOMRect) => void;
@@ -300,6 +443,9 @@ interface SinglePdfPageProps {
   onPlaceMarkPosition?: (pos: { x: number; y: number }, pageNum: number) => void;
   onMarkClick?: (mark: Highlight) => void;
   focusedMarkId?: string | null;
+  isDark: boolean;
+  invertDarkPdf: boolean;
+  isTintedLightTheme: boolean;
 }
 
 const SinglePdfPage: React.FC<SinglePdfPageProps> = ({
@@ -312,16 +458,40 @@ const SinglePdfPage: React.FC<SinglePdfPageProps> = ({
   onPlaceMarkPosition,
   onMarkClick,
   focusedMarkId,
+  isDark,
+  invertDarkPdf,
+  isTintedLightTheme,
 }) => {
   const pageContainerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textLayerRef = useRef<HTMLDivElement>(null);
+  const [textReady, setTextReady] = useState(false);
+  const [unmatchedHighlightIds, setUnmatchedHighlightIds] = useState<Set<string>>(new Set());
+
+  const markPins = highlights.filter((h) => h.type === 'mark');
+  const textHighlights = highlights.filter((h) => h.type !== 'mark');
 
   useEffect(() => {
+    let active = true;
+    setTextReady(false);
     if (canvasRef.current && textLayerRef.current) {
-      renderPage(pageNum, canvasRef.current, textLayerRef.current);
+      renderPage(pageNum, canvasRef.current, textLayerRef.current).then((ok) => {
+        if (active && ok) {
+          setTextReady(true);
+        }
+      });
     }
+    return () => {
+      active = false;
+    };
   }, [pageNum, renderPage]);
+
+  // Apply in-place highlights onto the PDF TextLayer whenever text finishes rendering or highlights change
+  useEffect(() => {
+    if (!textReady || !textLayerRef.current) return;
+    const unmatched = applyPdfInlineHighlights(textLayerRef.current, textHighlights);
+    setUnmatchedHighlightIds(unmatched);
+  }, [textReady, textHighlights]);
 
   const handlePageClick = (e: React.MouseEvent) => {
     if (isMarkMode && onPlaceMarkPosition && pageContainerRef.current) {
@@ -336,17 +506,46 @@ const SinglePdfPage: React.FC<SinglePdfPageProps> = ({
         },
         pageNum
       );
+      return;
+    }
+
+    // Check if user clicked an inline highlighted span (and didn't drag-select text)
+    const selection = window.getSelection();
+    if (selection && !selection.isCollapsed) return;
+
+    const target = e.target as HTMLElement;
+    const hlId = target.dataset?.highlightId;
+    if (hlId) {
+      const matched = textHighlights.find((h) => h.id === hlId);
+      if (matched) {
+        e.stopPropagation();
+        onHighlightClick(matched, target.getBoundingClientRect());
+      }
     }
   };
 
-  const markPins = highlights.filter((h) => h.type === 'mark');
-  const textHighlights = highlights.filter((h) => h.type !== 'mark');
+  const fallbackPills = textHighlights.filter((h) => unmatchedHighlightIds.has(h.id));
+
+  // Theme-adaptive canvas styling
+  const canvasThemeClass = isDark
+    ? invertDarkPdf
+      ? 'invert-[0.9] hue-rotate-180 contrast-[0.94]'
+      : 'brightness-[0.9] contrast-[1.03]'
+    : isTintedLightTheme
+    ? 'mix-blend-multiply'
+    : '';
 
   return (
-    <div
+    <motion.div
       ref={pageContainerRef}
       onClick={handlePageClick}
-      className={`relative shadow-2xl rounded-sm overflow-hidden bg-white ring-1 ring-black/5 ${
+      initial={{ opacity: 0.88 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.14, ease: 'easeOut' }}
+      style={{
+        backgroundColor: isDark && invertDarkPdf ? '#18191B' : isTintedLightTheme ? 'var(--bg-card)' : '#FFFFFF',
+      }}
+      className={`relative shadow-xl rounded-2xl overflow-hidden border border-[var(--border-color)] ${
         isMarkMode ? 'cursor-crosshair' : ''
       }`}
     >
@@ -361,23 +560,26 @@ const SinglePdfPage: React.FC<SinglePdfPageProps> = ({
       ))}
 
       {/* Canvas Layer */}
-      <canvas ref={canvasRef} className="block select-none" />
-
-      {/* Aligned Text Layer */}
-      <div
-        ref={textLayerRef}
-        className="absolute inset-0 pointer-events-auto leading-none overflow-hidden select-text textLayer"
-        style={{ opacity: 1 }}
+      <canvas
+        ref={canvasRef}
+        className={`block select-none transition-[filter] duration-200 ${canvasThemeClass}`}
       />
 
-      {/* Persistent Highlights Pill Bar on Page Bottom */}
-      {textHighlights.length > 0 && (
-        <div className="absolute top-2 right-2 flex flex-col gap-1 z-20 pointer-events-auto">
-          {textHighlights.map((h) => (
+      {/* Aligned Official PDF.js Text Layer */}
+      <div
+        ref={textLayerRef}
+        className="textLayer pointer-events-auto select-text"
+      />
+
+      {/* Fallback Highlights Pill Bar (only for highlights not matched to text spans) */}
+      {fallbackPills.length > 0 && (
+        <div className="absolute top-3 right-3 flex flex-col gap-1 z-20 pointer-events-auto">
+          {fallbackPills.map((h) => (
             <button
               key={h.id}
               type="button"
               onClick={(e) => {
+                e.stopPropagation();
                 const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
                 onHighlightClick(h, rect);
               }}
@@ -392,10 +594,10 @@ const SinglePdfPage: React.FC<SinglePdfPageProps> = ({
         </div>
       )}
 
-      {/* Page Number Watermark */}
-      <div className="absolute bottom-1 right-2 text-[9px] font-mono text-stone-300 pointer-events-none select-none">
+      {/* Subtle Page Number Watermark */}
+      <div className="absolute bottom-2 right-3 text-[10px] font-num text-[var(--text-muted)]/60 pointer-events-none select-none z-10">
         {pageNum}
       </div>
-    </div>
+    </motion.div>
   );
 };

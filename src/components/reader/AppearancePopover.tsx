@@ -7,6 +7,9 @@ import {
   UserPreferences,
   Book,
   ThemeMode,
+  PageFitMode,
+  PdfViewMode,
+  PdfPaperMode,
 } from '../../types';
 import {
   Type,
@@ -21,6 +24,14 @@ import {
   Sun,
   Moon,
   Ban,
+  Maximize2,
+  Columns2,
+  FileText,
+  ScrollText,
+  RotateCcw,
+  MoveHorizontal,
+  MoveVertical,
+  Scan,
 } from 'lucide-react';
 import { THEME_PALETTES, normalizeTheme } from '../../lib/themePalettes';
 
@@ -287,24 +298,178 @@ export const AppearancePopover: React.FC<AppearancePopoverProps> = ({
 
           {/* CONDITIONAL SECTION: Fixed format document vs Reflowable text document */}
           {isFixedFormat ? (
-            /* Fixed-Format Notice for PDF and CBZ image archives */
-            <div className="p-4 rounded-2xl bg-[var(--bg-surface)]/80 border border-[var(--border-color)] space-y-2.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-[#0071E3] dark:text-[#2997FF]" />
-                  <span className="text-xs font-semibold text-[var(--text-primary)]">
-                    Pre-Rendered Document
+            /* Page & Image Fit Studio for PDF and CBZ documents */
+            <div className="space-y-4">
+              {/* Auto-Fit Mode */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5">
+                    <Maximize2 className="w-3.5 h-3.5 text-[#0071E3] dark:text-[#2997FF]" />
+                    Page & Image Auto-Fit
+                  </span>
+                  <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-[var(--text-muted)]">
+                    {book?.fileType.toUpperCase()}
                   </span>
                 </div>
-                <span className="text-[10px] uppercase tracking-wider font-semibold px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-[var(--text-muted)]">
-                  {book?.fileType.toUpperCase()}
-                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  {(
+                    [
+                      { id: 'fit-page', label: 'Fit Page', desc: 'Auto-fit whole page', icon: Maximize2 },
+                      { id: 'fit-width', label: 'Fit Width', desc: 'Expand to full width', icon: MoveHorizontal },
+                      { id: 'fit-height', label: 'Fit Height', desc: 'Expand to full height', icon: MoveVertical },
+                      { id: 'actual', label: 'Actual Size', desc: 'Original 100% scale', icon: Scan },
+                    ] as { id: PageFitMode; label: string; desc: string; icon: typeof Maximize2 }[]
+                  ).map((mode) => {
+                    const Icon = mode.icon;
+                    const active = (preferences.pageFitMode || 'fit-page') === mode.id;
+                    return (
+                      <button
+                        key={mode.id}
+                        type="button"
+                        onClick={() => onChange({ pageFitMode: mode.id, pdfZoom: 1.0 })}
+                        className={`p-3 rounded-2xl text-left border transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                          active
+                            ? 'bg-[#0071E3] dark:bg-[#2997FF] text-white border-transparent shadow-xs'
+                            : 'bg-[var(--bg-surface)] text-[var(--text-primary)] border-[var(--border-color)] hover:border-[var(--border-hover)] hover:bg-[var(--bg-card)]'
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <Icon
+                              className={`w-3.5 h-3.5 shrink-0 ${
+                                active ? 'text-white' : 'text-[#0071E3] dark:text-[#2997FF]'
+                              }`}
+                            />
+                            <span className="text-[12.5px] font-semibold leading-tight truncate">
+                              {mode.label}
+                            </span>
+                          </div>
+                          <div
+                            className={`text-[10.5px] mt-1 truncate ${
+                              active ? 'text-white/80' : 'text-[var(--text-muted)]'
+                            }`}
+                          >
+                            {mode.desc}
+                          </div>
+                        </div>
+                        {active && <Check className="w-3.5 h-3.5 shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
-                Typography reflow, font substitution, and margin adjustments are disabled because text and illustrations are already embedded directly into the page plates.
-              </p>
-              <div className="pt-1 text-[11px] text-[var(--text-muted)]/80 italic">
-                Tip: Use the footer zoom stepper (− / +) and view modes (Single, Spread, Scroll) to scale pages.
+
+              {/* Page Layout (Single, Spread, Scroll) */}
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider block">
+                  Page Layout
+                </span>
+                <div className="grid grid-cols-3 gap-1 bg-[var(--bg-surface)] p-1 rounded-2xl border border-[var(--border-color)]">
+                  {(
+                    [
+                      { id: 'single', label: 'Single', icon: FileText },
+                      { id: 'spread', label: 'Two-Page', icon: Columns2 },
+                      { id: 'scroll', label: 'Scroll', icon: ScrollText },
+                    ] as { id: PdfViewMode; label: string; icon: typeof FileText }[]
+                  ).map((layout) => {
+                    const Icon = layout.icon;
+                    const active = preferences.pdfViewMode === layout.id;
+                    return (
+                      <button
+                        key={layout.id}
+                        type="button"
+                        onClick={() => onChange({ pdfViewMode: layout.id })}
+                        className={`py-2 px-2 flex items-center justify-center gap-1.5 text-[11px] font-medium rounded-xl transition cursor-pointer ${
+                          active
+                            ? 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-xs font-semibold'
+                            : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                        }`}
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                        <span>{layout.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* PDF Paper Style (Independent of Light/Dark Mode) */}
+              {book?.fileType === 'pdf' && (
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider block">
+                    PDF Paper
+                  </span>
+                  <div className="grid grid-cols-2 gap-1 bg-[var(--bg-surface)] p-1 rounded-2xl border border-[var(--border-color)]">
+                    {(
+                      [
+                        { id: 'original', label: 'Original Paper', icon: Sun },
+                        { id: 'dark', label: 'Dark Paper', icon: Moon },
+                      ] as { id: PdfPaperMode; label: string; icon: typeof Sun }[]
+                    ).map((opt) => {
+                      const Icon = opt.icon;
+                      const active = (preferences.pdfPaperMode || 'original') === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => onChange({ pdfPaperMode: opt.id })}
+                          className={`py-2 px-2 flex items-center justify-center gap-1.5 text-[11.5px] font-medium rounded-xl transition cursor-pointer ${
+                            active
+                              ? 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-xs font-semibold'
+                              : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                          }`}
+                        >
+                          <Icon className="w-3.5 h-3.5" />
+                          <span>{opt.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Zoom Fine-Tune */}
+              <div className="p-3.5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-color)] flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider block">
+                    Zoom Scale
+                  </span>
+                  <span className="font-num text-[13px] font-semibold text-[var(--text-primary)]">
+                    {Math.round(preferences.pdfZoom * 100)}%
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)] p-0.5 shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onChange({ pdfZoom: Math.max(0.5, Number((preferences.pdfZoom - 0.1).toFixed(1))) })
+                    }
+                    disabled={preferences.pdfZoom <= 0.5}
+                    className="w-8 h-7 rounded-lg flex items-center justify-center text-[var(--text-primary)] hover:bg-[var(--bg-surface)] disabled:opacity-25 transition cursor-pointer"
+                    title="Zoom Out"
+                  >
+                    <Minus className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onChange({ pdfZoom: 1.0 })}
+                    className="px-2 h-7 rounded-lg flex items-center justify-center text-[11px] font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition cursor-pointer"
+                    title="Reset Zoom to 100%"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onChange({ pdfZoom: Math.min(2.0, Number((preferences.pdfZoom + 0.1).toFixed(1))) })
+                    }
+                    disabled={preferences.pdfZoom >= 2.0}
+                    className="w-8 h-7 rounded-lg flex items-center justify-center text-[var(--text-primary)] hover:bg-[var(--bg-surface)] disabled:opacity-25 transition cursor-pointer"
+                    title="Zoom In"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
           ) : (

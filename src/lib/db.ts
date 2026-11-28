@@ -10,6 +10,8 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   textAlign: 'left',
   pdfViewMode: 'single',
   pdfZoom: 1.0,
+  pageFitMode: 'fit-page',
+  pdfPaperMode: 'original',
   autoHideUI: true,
   soundscape: {
     rainVolume: 0.4,

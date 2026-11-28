@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as pdfjsLib from 'pdfjs-dist';
-import { Book, Highlight, PdfViewMode, HighlightColor } from '../../types';
+import { Book, Highlight, PdfViewMode, HighlightColor, PageFitMode, PdfPaperMode } from '../../types';
 import { getBookFile } from '../../lib/db';
 import { LoadingScreen } from '../ui/LoadingState';
 import { MarkPin } from './MarkPin';
-import { Sun, Moon } from 'lucide-react';
+import { PAGE_FLIP_VARIANTS } from '../../lib/pageFlipMotion';
 
 // Guarantee PDF.js always executes off the main thread via dedicated Web Worker
 if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
@@ -17,6 +17,8 @@ interface PdfViewerProps {
   currentPage: number;
   viewMode: PdfViewMode;
   zoom: number; // 0.5 to 2.0
+  pageFitMode?: PageFitMode;
+  paperMode?: PdfPaperMode;
   highlights: Highlight[];
   isDark?: boolean;
   activeTheme?: string;
@@ -103,6 +105,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   currentPage,
   viewMode,
   zoom,
+  pageFitMode = 'fit-page',
+  paperMode = 'original',
   highlights,
   isDark = false,
   activeTheme = 'default',
@@ -119,7 +123,6 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [invertDarkPdf, setInvertDarkPdf] = useState(true);
 
   // Active rendering tasks to cancel if user jumps quickly
   const renderTasksRef = useRef<Map<number, pdfjsLib.RenderTask>>(new Map());
@@ -245,15 +248,25 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
 
       try {
         const page = await pdfDoc.getPage(pageNum);
-        const containerWidth = containerRef.current?.clientWidth || 860;
+        const containerWidth = containerRef.current?.clientWidth || window.innerWidth || 860;
+        const containerHeight = window.innerHeight || 800;
 
-        // Base scale calculation
+        // Base scale calculation based on pageFitMode (Fit Page, Fit Width, Fit Height, Actual)
         const unscaledViewport = page.getViewport({ scale: 1 });
-        let fitScale = (containerWidth - 64) / unscaledViewport.width;
-        if (viewMode === 'spread') {
-          fitScale = (containerWidth - 96) / (unscaledViewport.width * 2);
+        const cols = viewMode === 'spread' ? 2 : 1;
+        const horizontalPad = viewMode === 'spread' ? 96 : 64;
+        const widthScale = (containerWidth - horizontalPad) / (unscaledViewport.width * cols);
+        const heightScale = (containerHeight - 150) / unscaledViewport.height;
+
+        let fitScale = widthScale;
+        if (pageFitMode === 'fit-page') {
+          fitScale = Math.min(widthScale, heightScale);
+        } else if (pageFitMode === 'fit-height') {
+          fitScale = heightScale;
+        } else if (pageFitMode === 'actual') {
+          fitScale = 1.35;
         }
-        fitScale = Math.min(fitScale, 1.8);
+        fitScale = Math.max(0.35, Math.min(fitScale, 2.4));
 
         const actualScale = fitScale * zoom;
         const dpr = window.devicePixelRatio || 1;
@@ -318,7 +331,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         return false;
       }
     },
-    [pdfDoc, viewMode, zoom]
+    [pdfDoc, viewMode, zoom, pageFitMode]
   );
 
   // Compute pages to display based on mode
@@ -351,35 +364,24 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const isTintedLightTheme =
     !isDark && activeTheme !== 'default' && activeTheme !== 'alabaster';
 
+  // Track synchronous page-turn direction for 3D page-flip animation
+  const prevPageRef = useRef(currentPage);
+  const directionRef = useRef(1);
+  if (currentPage !== prevPageRef.current) {
+    directionRef.current = currentPage > prevPageRef.current ? 1 : -1;
+    prevPageRef.current = currentPage;
+  }
+  const flipDirection = directionRef.current;
+  const pageAnimKey = viewMode === 'scroll' ? `scroll` : `${viewMode}-${currentPage}`;
+
   return (
     <div
       ref={containerRef}
       onMouseUp={handleMouseUp}
       onClick={handleContainerClick}
-      className="w-full min-h-full flex flex-col items-center justify-start px-4 sm:px-8 py-20 sm:py-24 select-text relative"
+      style={{ perspective: '1800px' }}
+      className="w-full min-h-full flex flex-col items-center justify-start px-4 sm:px-8 py-20 sm:py-24 select-text relative overflow-x-hidden"
     >
-      {/* Subtle Dark Paper Toggle when reading PDFs in Dark Mode */}
-      {isDark && !loading && !error && (
-        <button
-          type="button"
-          onClick={() => setInvertDarkPdf((prev) => !prev)}
-          className="fixed bottom-20 right-4 sm:right-6 z-30 px-3 py-1.5 rounded-full bg-[var(--bg-card)]/90 backdrop-blur-xl border border-[var(--border-color)] shadow-md text-[11px] font-medium text-[var(--text-primary)] hover:border-[#0071E3]/50 transition flex items-center gap-1.5 cursor-pointer select-none"
-          title={invertDarkPdf ? 'Switch to Original White Paper' : 'Switch to Dark Paper'}
-        >
-          {invertDarkPdf ? (
-            <>
-              <Sun className="w-3.5 h-3.5 text-amber-400" />
-              <span>Original Paper</span>
-            </>
-          ) : (
-            <>
-              <Moon className="w-3.5 h-3.5 text-[#2997FF]" />
-              <span>Dark Paper</span>
-            </>
-          )}
-        </button>
-      )}
-
       {loading && (
         <LoadingScreen
           title="Rendering Pages"
@@ -394,13 +396,15 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       )}
 
       {!loading && !error && (
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="popLayout" custom={flipDirection} initial={false}>
           <motion.div
-            key={viewMode}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.14, ease: 'easeOut' }}
+            key={pageAnimKey}
+            custom={flipDirection}
+            variants={PAGE_FLIP_VARIANTS}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            style={{ willChange: 'transform, opacity', transformStyle: 'preserve-3d' }}
             className={`flex ${
               viewMode === 'spread' ? 'flex-row items-start' : 'flex-col items-center'
             } gap-6 justify-center`}
@@ -417,8 +421,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
                 onPlaceMarkPosition={onPlaceMarkPosition}
                 onMarkClick={onMarkClick}
                 focusedMarkId={focusedMarkId}
-                isDark={isDark}
-                invertDarkPdf={invertDarkPdf}
+                paperMode={paperMode}
                 isTintedLightTheme={isTintedLightTheme}
               />
             ))}
@@ -443,8 +446,7 @@ interface SinglePdfPageProps {
   onPlaceMarkPosition?: (pos: { x: number; y: number }, pageNum: number) => void;
   onMarkClick?: (mark: Highlight) => void;
   focusedMarkId?: string | null;
-  isDark: boolean;
-  invertDarkPdf: boolean;
+  paperMode: PdfPaperMode;
   isTintedLightTheme: boolean;
 }
 
@@ -458,8 +460,7 @@ const SinglePdfPage: React.FC<SinglePdfPageProps> = ({
   onPlaceMarkPosition,
   onMarkClick,
   focusedMarkId,
-  isDark,
-  invertDarkPdf,
+  paperMode,
   isTintedLightTheme,
 }) => {
   const pageContainerRef = useRef<HTMLDivElement>(null);
@@ -526,11 +527,11 @@ const SinglePdfPage: React.FC<SinglePdfPageProps> = ({
 
   const fallbackPills = textHighlights.filter((h) => unmatchedHighlightIds.has(h.id));
 
-  // Theme-adaptive canvas styling
-  const canvasThemeClass = isDark
-    ? invertDarkPdf
-      ? 'invert-[0.9] hue-rotate-180 contrast-[0.94]'
-      : 'brightness-[0.9] contrast-[1.03]'
+  const useDarkPaper = paperMode === 'dark';
+
+  // Paper styling stays consistent regardless of Light/Dark UI mode switching
+  const canvasThemeClass = useDarkPaper
+    ? 'invert-[0.9] hue-rotate-180 contrast-[0.94]'
     : isTintedLightTheme
     ? 'mix-blend-multiply'
     : '';
@@ -543,7 +544,7 @@ const SinglePdfPage: React.FC<SinglePdfPageProps> = ({
       animate={{ opacity: 1 }}
       transition={{ duration: 0.14, ease: 'easeOut' }}
       style={{
-        backgroundColor: isDark && invertDarkPdf ? '#18191B' : isTintedLightTheme ? 'var(--bg-card)' : '#FFFFFF',
+        backgroundColor: useDarkPaper ? '#18191B' : isTintedLightTheme ? 'var(--bg-card)' : '#FFFFFF',
       }}
       className={`relative shadow-xl rounded-2xl overflow-hidden border border-[var(--border-color)] ${
         isMarkMode ? 'cursor-crosshair' : ''

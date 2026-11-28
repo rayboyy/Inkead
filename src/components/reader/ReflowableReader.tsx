@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Book, Highlight, UserPreferences, HighlightColor } from '../../types';
+import { TEXT_PAGE_FLIP_VARIANTS } from '../../lib/pageFlipMotion';
 import { parseTextOrMarkdown, ReflowableChapter, markdownToHtml } from '../../lib/parsers/txtParser';
 import { parseEpub } from '../../lib/parsers/epubParser';
 import { parseFb2 } from '../../lib/parsers/fb2Parser';
@@ -255,6 +256,15 @@ export const ReflowableReader: React.FC<ReflowableReaderProps> = ({
   );
   const currentChapterMarks = currentChapterHighlights.filter((h) => h.type === 'mark');
 
+  // Synchronous page-turn direction for 3D editorial page flip
+  const prevPageRef = useRef(currentPage);
+  const directionRef = useRef(1);
+  if (currentPage !== prevPageRef.current) {
+    directionRef.current = currentPage > prevPageRef.current ? 1 : -1;
+    prevPageRef.current = currentPage;
+  }
+  const flipDirection = directionRef.current;
+
   return (
     <div
       ref={containerRef}
@@ -262,7 +272,8 @@ export const ReflowableReader: React.FC<ReflowableReaderProps> = ({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onClick={handleContainerClick}
-      className="w-full min-h-screen flex flex-col items-center justify-start px-4 sm:px-8 py-16 sm:py-24 relative select-text"
+      style={{ perspective: '2000px' }}
+      className="w-full min-h-screen flex flex-col items-center justify-start px-4 sm:px-8 py-16 sm:py-24 relative select-text overflow-x-hidden"
     >
       {/* Edge Click Zones (Subtle Visual cues on hover) */}
       <button
@@ -313,24 +324,29 @@ export const ReflowableReader: React.FC<ReflowableReaderProps> = ({
       )}
 
       {!loading && !error && currentChapter && (
-        <motion.article
-          key={currentPage}
-          ref={contentRef}
-          onClick={handleArticleClick}
-          initial={{ opacity: 0.88 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.12, ease: 'easeOut' }}
-          style={{
-            fontFamily: FONT_FAMILY_MAP[preferences.fontFamily] || FONT_FAMILY_MAP.jakarta,
-            fontSize: `${preferences.fontSize}px`,
-            lineHeight: preferences.lineHeight,
-            textAlign: preferences.textAlign,
-            position: 'relative',
-          }}
-          className={`w-full ${widthClassMap[preferences.contentWidth]} select-text relative ${
-            isMarkMode ? 'cursor-crosshair' : ''
-          }`}
-        >
+        <AnimatePresence mode="popLayout" custom={flipDirection} initial={false}>
+          <motion.article
+            key={currentPage}
+            ref={contentRef}
+            onClick={handleArticleClick}
+            custom={flipDirection}
+            variants={TEXT_PAGE_FLIP_VARIANTS}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            style={{
+              fontFamily: FONT_FAMILY_MAP[preferences.fontFamily] || FONT_FAMILY_MAP.jakarta,
+              fontSize: `${preferences.fontSize}px`,
+              lineHeight: preferences.lineHeight,
+              textAlign: preferences.textAlign,
+              position: 'relative',
+              willChange: 'transform, opacity',
+              transformStyle: 'preserve-3d',
+            }}
+            className={`w-full ${widthClassMap[preferences.contentWidth]} select-text relative ${
+              isMarkMode ? 'cursor-crosshair' : ''
+            }`}
+          >
           {/* Mark Pins on Canvas */}
           {currentChapterMarks.map((mark) => (
             <MarkPin
@@ -428,7 +444,8 @@ export const ReflowableReader: React.FC<ReflowableReaderProps> = ({
               </button>
             ) : <span />}
           </div>
-        </motion.article>
+          </motion.article>
+        </AnimatePresence>
       )}
     </div>
   );

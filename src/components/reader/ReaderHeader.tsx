@@ -13,7 +13,7 @@ import {
   MapPin,
 } from 'lucide-react';
 import { TimerHudPill } from '../timer/TimerHudPill';
-import { SpotifyIcon } from '../audio/SpotifyLofiPopover';
+import { SpotifyIcon, AudioEqualizer } from '../audio/SpotifyLofiPopover';
 
 interface ReaderHeaderProps {
   book: Book;
@@ -166,18 +166,18 @@ export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
             <button
               type="button"
               onClick={onOpenSpotify}
-              className={`p-2 rounded-full transition cursor-pointer relative ${
+              className={`rounded-full transition-colors cursor-pointer flex items-center gap-1.5 ${
                 isSpotifyActive
-                  ? 'text-[#0071E3] dark:text-[#2997FF] bg-[#0071E3]/10 dark:bg-[#2997FF]/15'
-                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]'
+                  ? 'px-2.5 py-1.5 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] shadow-2xs'
+                  : 'p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]'
               }`}
               title="Spotify Lofi Reading Playlists"
               aria-label="Spotify Lofi"
             >
-              <SpotifyIcon className="w-4 h-4 text-[#1DB954]" />
-              {isSpotifyActive && (
-                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#1DB954] animate-pulse" />
-              )}
+              <SpotifyIcon
+                className={`w-4 h-4 ${isSpotifyActive ? 'text-[#1DB954]' : ''}`}
+              />
+              {isSpotifyActive && <AudioEqualizer className="text-[#1DB954]" />}
             </button>
           )}
 

@@ -33,7 +33,7 @@ import { InstallAppModal } from '../pwa/InstallAppModal';
 import { BOOK_COVER_PALETTES, getBookCoverPalette } from './BookCoverPlaceholder';
 import { ImportMenuPopover } from './ImportMenuPopover';
 import { PasteTextModal } from './PasteTextModal';
-import { SpotifyIcon } from '../audio/SpotifyLofiPopover';
+import { SpotifyIcon, AudioEqualizer } from '../audio/SpotifyLofiPopover';
 import { ImportUrlModal } from './ImportUrlModal';
 import { WikipediaParsedBook } from '../../lib/parsers/wikipediaParser';
 import { ThemeSettingsModal } from '../settings/ThemeSettingsModal';
@@ -612,9 +612,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
               >
                 <SpotifyIcon className="w-3.5 h-3.5 text-[#1DB954]" />
                 <span className="hidden md:inline">Lofi</span>
-                {isSpotifyActive && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#1DB954] animate-pulse" />
-                )}
+                {isSpotifyActive && <AudioEqualizer className="text-[#1DB954] ml-0.5" />}
               </button>
             )}
 

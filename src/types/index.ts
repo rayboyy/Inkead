@@ -92,6 +92,8 @@ export type ReadingFont = 'literata' | 'newsreader' | 'jakarta' | 'mono';
 export type ContentWidth = 'narrow' | 'balanced' | 'wide';
 export type TextAlign = 'left' | 'justify';
 export type PdfViewMode = 'single' | 'spread' | 'scroll';
+export type PageFitMode = 'fit-page' | 'fit-width' | 'fit-height' | 'actual';
+export type PdfPaperMode = 'original' | 'dark';
 
 export interface SoundscapeState {
   rainVolume: number;
@@ -112,6 +114,8 @@ export interface UserPreferences {
   textAlign: TextAlign;
   pdfViewMode: PdfViewMode;
   pdfZoom: number; // 0.5 to 2.0, or 1 for 100%
+  pageFitMode?: PageFitMode;
+  pdfPaperMode?: PdfPaperMode;
   autoHideUI: boolean;
   soundscape: SoundscapeState;
   focusRulerActive: boolean;

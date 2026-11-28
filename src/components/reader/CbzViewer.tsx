@@ -5,6 +5,7 @@ import { CbzPageItem } from '../../workers/cbzWorker';
 import { cbzService } from '../../services/cbzService';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { LoadingScreen, PlateLoadingSkeleton, BlinkingDots } from '../ui/LoadingState';
+import { PAGE_FLIP_VARIANTS } from '../../lib/pageFlipMotion';
 
 interface CbzViewerProps {
   book: Book;
@@ -206,7 +207,36 @@ export const CbzViewer: React.FC<CbzViewerProps> = ({
   const isContinuous = viewMode === 'scroll';
   const isSpread = viewMode === 'spread';
   const zoomScale = preferences.pdfZoom || 1.0;
+  const pageFitMode = preferences.pageFitMode || 'fit-page';
   const navStep = isSpread ? 2 : 1;
+
+  const getPlateStyle = (): React.CSSProperties => {
+    if (pageFitMode === 'fit-width') {
+      return {
+        width: isSpread ? '100%' : `${Math.round(92 * zoomScale)}vw`,
+        maxWidth: isSpread ? '100%' : `${Math.round(1080 * zoomScale)}px`,
+        height: 'auto',
+      };
+    }
+    if (pageFitMode === 'fit-height') {
+      return {
+        height: `${Math.round(86 * zoomScale)}vh`,
+        width: 'auto',
+        maxWidth: 'none',
+      };
+    }
+    if (pageFitMode === 'actual') {
+      return {
+        transform: zoomScale !== 1 ? `scale(${zoomScale})` : undefined,
+        transformOrigin: 'top center',
+      };
+    }
+    // Default: fit-page (auto-expands cleanly inside viewport)
+    return {
+      maxHeight: `${Math.round(85 * zoomScale)}vh`,
+      maxWidth: isSpread ? '100%' : `${Math.round(92 * zoomScale)}vw`,
+    };
+  };
 
   // Synchronous cache fallbacks for instant 0ms, zero-flash transitions between view modes
   const activeSingleUrl = singlePlateUrl || cbzService.getCachedPlateUrl(book.id, currentPage) || null;
@@ -262,16 +292,29 @@ export const CbzViewer: React.FC<CbzViewerProps> = ({
         </>
       )}
 
-      {/* Butter-Smooth Animated View Mode Container */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={viewMode}
-          initial={{ opacity: 0, scale: 0.985 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.985 }}
-          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full flex flex-col items-center justify-start"
-        >
+      {/* Butter-Smooth Animated View Mode & Page-Flip Container */}
+      {(() => {
+        const prevRef = lastScrolledPageRef;
+        // Compute synchronous flip direction for non-scroll modes
+        const cbzDir = currentPage >= prevRef.current ? 1 : -1;
+        if (!isContinuous && currentPage !== prevRef.current) {
+          prevRef.current = currentPage;
+        }
+        const cbzAnimKey = isContinuous ? 'scroll' : `${viewMode}-${currentPage}`;
+
+        return (
+          <div style={{ perspective: '1800px' }} className="w-full overflow-x-hidden">
+            <AnimatePresence mode="popLayout" custom={cbzDir} initial={false}>
+              <motion.div
+                key={cbzAnimKey}
+                custom={cbzDir}
+                variants={PAGE_FLIP_VARIANTS}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                style={{ willChange: 'transform, opacity', transformStyle: 'preserve-3d' }}
+                className="w-full flex flex-col items-center justify-start"
+              >
           {/* 1. CONTINUOUS SCROLL MODE */}
           {isContinuous ? (
             <div
@@ -301,10 +344,7 @@ export const CbzViewer: React.FC<CbzViewerProps> = ({
                   <img
                     src={activeLeftUrl}
                     alt={`Plate ${currentPage}`}
-                    style={{
-                      maxHeight: `${Math.round(85 * zoomScale)}vh`,
-                      maxWidth: '100%',
-                    }}
+                    style={getPlateStyle()}
                     className="object-contain rounded-xl shadow-2xl ring-1 ring-black/10 transition-all duration-150"
                     loading="eager"
                   />
@@ -319,10 +359,7 @@ export const CbzViewer: React.FC<CbzViewerProps> = ({
                   <img
                     src={activeRightUrl}
                     alt={`Plate ${currentPage + 1}`}
-                    style={{
-                      maxHeight: `${Math.round(85 * zoomScale)}vh`,
-                      maxWidth: '100%',
-                    }}
+                    style={getPlateStyle()}
                     className="object-contain rounded-xl shadow-2xl ring-1 ring-black/10 transition-all duration-150"
                     loading="eager"
                   />
@@ -345,10 +382,7 @@ export const CbzViewer: React.FC<CbzViewerProps> = ({
                 <img
                   src={activeSingleUrl}
                   alt={`Plate ${currentPage}`}
-                  style={{
-                    maxHeight: `${Math.round(85 * zoomScale)}vh`,
-                    maxWidth: `${Math.round(92 * zoomScale)}vw`,
-                  }}
+                  style={getPlateStyle()}
                   className="object-contain rounded-xl shadow-2xl ring-1 ring-black/10 transition-all duration-200"
                   loading="eager"
                 />
@@ -359,8 +393,11 @@ export const CbzViewer: React.FC<CbzViewerProps> = ({
               )}
             </div>
           )}
-        </motion.div>
-      </AnimatePresence>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        );
+      })()}
     </div>
   );
 };
